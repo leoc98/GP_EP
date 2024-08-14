@@ -58,15 +58,20 @@ public:
 		return int( _instructions.size() );
 	}
 	
-	bool haltingCondition( ProgramState* ps, int &error ){
+	/*
+		in EP problem, program can halt immediately when goal state reach
+		even program contains more instructions to apply
+	*/
+	bool haltingCondition( Instance* instance, ProgramState* ps, int &error ){
 		int line = ps->getLine();
 		// EMPTY line is a halting condition (no transition defined)
-		if( _instructions[ line ] == nullptr ){
+		Instruction* cur_instruction = _instructions[ line ];
+		if( cur_instruction == nullptr or instance->isGoalState(ps)){
 			return true;
 		}
 
 		// Either True or False evaluation of End instructions is a halting condition
-		End* ins_end = dynamic_cast< End* > ( _instructions[ line ] );
+		End* ins_end = dynamic_cast< End* > ( _instructions[ line ] );		
 		if( ins_end ) return true;
 
         // Conditional effects, actions do not have to be necessarily applicable
@@ -86,13 +91,23 @@ public:
 	
 	bool checkGoal( ProgramState *ps, Instance *ins, int &error ){
 		int line = ps->getLine();
-		if( _instructions[ line ] == nullptr ) return false;
-		End *end = dynamic_cast<End*>( _instructions[ line ] );
-		if( end and not end->isGoalState( ins, ps ) ){
+
+		/*
+			define error type 2, to handle the case to move to next instance but not at a deadend
+		*/
+		if( ins->isGoalState( ps ) ) {
+			return true;
+		}
+		if( _instructions[ line ] == nullptr ) {
+			error = -2; // ERROR 2: need more instructions
+			return false;
+		}
+		End *end = dynamic_cast<End*>( _instructions[ line ] );	
+		if( end and not ins->isGoalState( ps ) ){
             #ifdef DEBUG
 			//cout << ps->toString() << endl;
             #endif
-			error = -1; // ERROR 1: Incorrect program
+			error = -1; // ERROR 1: Incorrect program, go into dead end
 			return false;
 		}
 		return false;
@@ -164,7 +179,7 @@ public:
 			set< vector<int> > visited;
 			int error = 0;
 
-			while( !haltingCondition( ps, error ) ){
+			while( !haltingCondition( gpp->getInstance(id), ps, error ) ){
 				if( infinite_detection ){
 					// Checking infinite loop (only for backward loops)
 					Goto *g = dynamic_cast<Goto*>( _instructions[ line ] );
@@ -333,7 +348,7 @@ public:
 				cout << "INSTANCE #" << (id+1) << " SOLVED! [" << difftime(end_instance,start_instance) <<"]" << endl;
 			start_instance = end_instance;
             #else
-            if( error < 0 ){
+            if( error == -1 ){
                 _failed_instance_id = id;
                 errors++;
                 break;
@@ -342,7 +357,10 @@ public:
                     if( pss[i] ) delete pss[i];
                 }
                 return vector<ProgramState*>();*/
-            }
+            } else if (error == -2) {
+				_failed_instance_id = id;
+				break;
+			}
 			#endif
 		}
 

@@ -141,30 +141,40 @@ public:
 		if( vps.empty() )
 			return false;
 		
+		bool is_goal = true;
+		
 		for( int id = 0; id < int( vps.size() ); id++ ){
 		    if(progressive_eval and not _gpp->isInstanceActive(id ) ) continue;
-			int line = vps[ id ]->getLine();
-			Instruction *ins = p->getInstruction( line );
-			if( ins == nullptr ){
-				freeProgramStates( vps );
-				return false;
-			}
 			
-			End *end = dynamic_cast<End*>( ins );
-			if( end ){
-				if( not end->isGoalState( _gpp->getInstance( id ), vps[ id ] ) ){
-					freeProgramStates( vps );
-					return false;
-				}
-			}
-			else{ // The current instruction is not an end instruction
-				freeProgramStates( vps );
-				return false;
+			// int line = vps[ id ]->getLine();
+			// Instruction *ins = p->getInstruction( line );
+			// if( ins == nullptr ){
+			// 	freeProgramStates( vps );
+			// 	return false;
+			// }
+			
+			// End *end = dynamic_cast<End*>( ins );
+			// if( end ){
+			// 	if( not end->isGoalState( _gpp->getInstance( id ), vps[ id ] ) ){
+			// 		freeProgramStates( vps );
+			// 		return false;
+			// 	}
+			// }
+			// else{ // The current instruction is not an end instruction
+			// 	freeProgramStates( vps );
+			// 	return false;
+			// }
+			/*
+				we should check goal state in every instructions rather than end
+			*/
+			if(not _gpp->getInstance( id )->isGoalState( vps[ id ] ) ){
+				is_goal = false;
+				break;
 			}
 		}
 		
 		freeProgramStates( vps );
-		return true;
+		return is_goal;
 	}
 	
 	vector< Node* > expandNode( Node *node, bool incremental_eval ) override{
