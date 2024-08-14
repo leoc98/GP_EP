@@ -142,17 +142,22 @@ public:
 	
 	~End() override =default;
 	
-	bool isGoalState( Instance *ins, ProgramState *ps ) override{
-		State *s = ps->getState();
-		vector< Condition* > goal = ins->getGoalCondition();
+	/*
+		since isGoalState is independent from instruction, 
+		it will be moved to instance.h
+	*/
+
+	// bool isGoalState( Instance *ins, ProgramState *ps ) override{
+	// 	State *s = ps->getState();
+	// 	vector< Condition* > goal = ins->getGoalCondition();
 		
-		for(auto & g : goal){
-			if( !g->evalCondition( s ) )
-				return false;
-		}
+	// 	for(auto & g : goal){
+	// 		if( !g->evalCondition( s ) )
+	// 			return false;
+	// 	}
 		
-		return true;
-	}
+	// 	return true;
+	// }
 	
 	string toString( bool full_info ) const override{
 		string ret = "end\n";

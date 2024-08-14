@@ -4,6 +4,7 @@
 #include "common.h"
 #include "state.h"
 #include "condition.h"
+#include "program_state.h"
 
 class Instance{
 public:
@@ -82,6 +83,21 @@ public:
 
 	int getInstanceID() const {
 	    return _instance_id;
+	}
+
+	/*
+		move from instruction
+	*/
+	bool isGoalState( ProgramState *ps ){
+		State *s = ps->getState();
+		vector< Condition* > goal = this->getGoalCondition();
+		
+		for(auto & g : goal){
+			if( !g->evalCondition( s ) )
+				return false;
+		}
+		
+		return true;
 	}
 
 	// Full info printing
