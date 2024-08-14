@@ -6,3 +6,7 @@ experiments/validation/*
 cmake-build-debug/
 CMakeLists.txt
 
+domain/synthesis/*
+experiments/synthesis/*
+.vscode/launch.json
+.vscode/tasks.json
