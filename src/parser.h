@@ -38,18 +38,19 @@ public:
     }
 
     static Variable* readGroundedVar( StateDescriptor *sd, const string &name, Instance *ins ){
-        string var_name = name, var_type;
+        string var_name = name;
+        VariableType var_type;
         int var_id;
 
         bool var_constant = isDigit( name );
         vector< int > param_ids;
         size_t pos;
         if( var_constant ) {
-            var_type = "constant";
+            var_type = VariableType::CONSTANT;
             var_id = atoi( name.c_str() );
         }
         else if( (pos = name.find('(')) != string::npos ) {
-            var_type = "predicate";
+            var_type = VariableType::PREDICATE;
             var_name = name.substr( 0, pos );
             var_id = sd->getTypeID( var_name );
             var_name += "(";
@@ -63,7 +64,7 @@ public:
             var_name += ")";
         }
         else {
-            var_type = "pointer";
+            var_type = VariableType::POINTER;
             var_id = sd->getTypeID( name );
         }
 
@@ -72,18 +73,19 @@ public:
 
 	static Variable* groundingVar( StateDescriptor *sd, const string &name, const map< string, int > &par_name_to_idx,
                        const vector< string > &grounded_params ){
-		string var_name = name, var_type;
+		string var_name = name;
+        VariableType var_type;
         int var_id;
 
         bool var_constant = isDigit( name );
         vector< int > param_ids;
         size_t pos;
 		if( var_constant ) {
-            var_type = "constant";
+            var_type = VariableType::CONSTANT;
             var_id = atoi( name.c_str() );
         }
 		else if( (pos = name.find('(')) != string::npos ) {
-		    var_type = "predicate";
+		    var_type = VariableType::PREDICATE;
 		    var_name = name.substr( 0, pos );
 		    var_id = sd->getTypeID( var_name );
 		    var_name += "(";
@@ -101,7 +103,7 @@ public:
             var_name += ")";
 		}
 		else {
-		    var_type = "pointer";
+		    var_type = VariableType::POINTER;
 		    var_id = sd->getTypeID( name );
 		}
 

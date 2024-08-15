@@ -45,15 +45,15 @@ public:
 	// Set the content of left-hand side variable
 	virtual void setLeftVarNum( StateDescriptor *sd, State *s, int number ) const{
 		int id = _lhs->getID();
-		string vtype = _lhs->getVType();
+		VariableType vtype = _lhs->getVType();
 
 		// Content of pointers cannot be modified, only pointers and grounded predicates
-		assert( (vtype == "pointer" and not _lhs->accessMemory()) or vtype == "predicate" );
+		assert( (vtype == VariableType::POINTER and not _lhs->accessMemory()) or vtype == VariableType::PREDICATE );
 
-		if( vtype == "pointer" ){
+		if( vtype == VariableType::POINTER ){
 		    s->setPointer( sd, id, number );
 		}
-		else if( vtype == "predicate" ){
+		else if( vtype == VariableType::PREDICATE ){
             auto pred_type = sd->getPredicateName( id );
 		    vector< int > params = _lhs->getParameterIDs();
 		    vector< int > param_obj_idx ( params.size() );
@@ -67,11 +67,11 @@ public:
 	// Value of the variable in current state or constant number
     virtual int getVarNum( StateDescriptor *sd, const State* s, Variable *v ) const{
 		int id = v->getID();
-		string vtype = v->getVType();
+		VariableType vtype = v->getVType();
 
-		assert( vtype == "pointer" or vtype == "predicate" or vtype == "constant" );
+		// assert( vtype == VariableType::POINTER or vtype == VariableType::PREDICATE or vtype == VariableType::CONSTANT or vtype == VariableType::EPISTEMIC);
 
-		if( vtype == "pointer" ){
+		if( vtype == VariableType::POINTER ){
 		    // ToDo alternative implementation of access to objects,
 		    //  which would require the Instance as parameter
 			//if( v->accessMemory() ){
@@ -80,7 +80,7 @@ public:
 			return s->getPointer( sd, id );
 		}	
 
-		else if( vtype == "predicate" ){
+		else if( vtype == VariableType::PREDICATE ){
             auto pred_type = sd->getPredicateName( id );
             vector< int > params = v->getParameterIDs();
             vector< int > param_obj_idx ( params.size() );
@@ -92,6 +92,9 @@ public:
                     param_obj_idx[i] = s->getPointer(sd, params[i] );
             }
 		    return s->getRegister( sd, pred_type, param_obj_idx );
+		} else if ( vtype == VariableType::EPISTEMIC ){
+			// TODO: handle epistemic
+			return -1;
 		}
 
 		// Otherwise is a constant
@@ -99,6 +102,9 @@ public:
     }
         
     // Return the left-hand side value
+	/*
+	TODO: need support ep expression
+	*/
     virtual int getLHS( StateDescriptor *sd, const State* s ) const{
 		return getVarNum( sd, s, _lhs );
 	}
@@ -110,18 +116,18 @@ public:
 
 	virtual string getLeftName( StateDescriptor *sd ) const{
         int id = _lhs->getID();
-        string vtype = _lhs->getVType();
+        VariableType vtype = _lhs->getVType();
 
-        if( vtype != "predicate" ) return "";
+        if( vtype != VariableType::PREDICATE ) return "";
 
         return sd->getPredicateName( id );
 	}
 
 	virtual vector<int> getLeftObjects( ) const{
         //int id = _lhs->getID();
-        string vtype = _lhs->getVType();
+        VariableType vtype = _lhs->getVType();
 
-        assert( vtype == "predicate"); // The var type must be a predicate
+        assert( vtype == VariableType::PREDICATE); // The var type must be a predicate
 
         vector< int > params = _lhs->getParameterIDs();
         vector< int > param_obj_idx ( params.size() );
@@ -134,9 +140,9 @@ public:
 
     virtual vector<string> getLeftPointerNames( StateDescriptor *sd ) const{
         //int id = _lhs->getID();
-        string vtype = _lhs->getVType();
+        VariableType vtype = _lhs->getVType();
 
-        assert( vtype == "predicate"); // The var type must be a predicate
+        assert( vtype == VariableType::PREDICATE); // The var type must be a predicate
 
         vector< int > params = _lhs->getParameterIDs();
         vector< string > pointer_names ( params.size() );

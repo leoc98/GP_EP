@@ -40,13 +40,13 @@ public:
                 auto *inc_act = new Action("inc("+p+")");
 
                 Condition *inc_cond = new Add( sd,
-                        new Variable( p, "pointer", sd->getTypeID(p) ),
-                        new Variable( "1", "constant", 1 ) );
+                        new Variable( p, VariableType::POINTER, sd->getTypeID(p) ),
+                        new Variable( "1", VariableType::CONSTANT, 1 ) );
                 inc_act->addCondition( inc_cond );
 
                 Operation *add_assign_op = new AddAssign( sd,
-                        new Variable( p, "pointer", sd->getTypeID( p ) ),
-                        new Variable( "1", "constant", 1 ) );
+                        new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                        new Variable( "1", VariableType::CONSTANT, 1 ) );
                 inc_act->addOperation( add_assign_op );
 
                 _extra_actions.push_back( inc_act );
@@ -57,13 +57,13 @@ public:
                 auto *dec_act = new Action("dec("+p+")");
 
                 Condition *dec_cond = new Subtract( sd,
-                        new Variable( p, "pointer", sd->getTypeID( p ) ),
-                        new Variable( "1", "constant", 1 ) );
+                        new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                        new Variable( "1", VariableType::CONSTANT, 1 ) );
                 dec_act->addCondition( dec_cond );
 
                 Operation * sub_assign_op = new SubtractAssign( sd,
-                        new Variable( p, "pointer", sd->getTypeID( p ) ),
-                        new Variable( "1", "constant", 1 ) );
+                        new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                        new Variable( "1", VariableType::CONSTANT, 1 ) );
                 dec_act->addOperation( sub_assign_op );
 
                 _extra_actions.push_back( dec_act );
@@ -76,8 +76,8 @@ public:
 
                 // NO CONDITION
 
-                Operation *test_op = new TestMax( sd, new Variable(p, "pointer", sd->getTypeID(p)),
-                                                  new Variable("","constant",0));
+                Operation *test_op = new TestMax( sd, new Variable(p, VariableType::POINTER, sd->getTypeID(p)),
+                                                  new Variable("",VariableType::CONSTANT,0));
                 test_act->addOperation( test_op );
 
                 _extra_actions.push_back( test_act );
@@ -88,8 +88,8 @@ public:
                 Action *cmp_act = new Action("test-min("+p+")");
                 // NO CONDS
                 Operation *cmp_op = new Compare( sd,
-                                                 new Variable( p, "pointer", sd->getTypeID( p ) ),
-                                                 new Variable( "0", "constant", 0 ) );
+                                                 new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                                                 new Variable( "0", VariableType::CONSTANT, 0 ) );
                 cmp_act->addOperation( cmp_op );
 
                 _extra_actions.push_back( cmp_act );
@@ -100,8 +100,8 @@ public:
                 // New 3. clear a pointer (reset the pointer to the first position)
                 auto *clear_act = new Action( "clear("+p+")" );
                 // NO CONDITION
-                Operation *clear_op = new Assign(sd, new Variable(p,"pointer",sd->getTypeID(p)),
-                                                 new Variable("","constant",0));
+                Operation *clear_op = new Assign(sd, new Variable(p,VariableType::POINTER,sd->getTypeID(p)),
+                                                 new Variable("",VariableType::CONSTANT,0));
                 clear_act->addOperation(clear_op);
                 _extra_actions.push_back( clear_act );
                 Instruction *clear_ins = new PlanningAction( clear_act );
@@ -115,8 +115,8 @@ public:
                     //5. set(pointer1,pointer2). Assign pointer2 to pointer1
                     auto *set_act = new Action("set(" + p + "," + p2 + ")");
                     //NO CONDS
-                    Operation *assign_op = new Assign(sd, new Variable( p, "pointer", sd->getTypeID( p )),
-                                                      new Variable( p2, "pointer", sd->getTypeID( p2 ) ) );
+                    Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p )),
+                                                      new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ) );
                     set_act->addOperation(assign_op);
 
                     _extra_actions.push_back(set_act);
@@ -132,8 +132,8 @@ public:
                         auto *cmp_act = new Action("cmp(" + p + "," + p2 + ")");
                         // NO CONDS
                         Operation *cmp_op = new Compare(sd,
-                                                        new Variable(p, "pointer", sd->getTypeID(p)),
-                                                        new Variable(p2, "pointer", sd->getTypeID(p2)));
+                                                        new Variable(p, VariableType::POINTER, sd->getTypeID(p)),
+                                                        new Variable(p2, VariableType::POINTER, sd->getTypeID(p2)));
                         cmp_act->addOperation(cmp_op);
 
                         _extra_actions.push_back(cmp_act);
@@ -173,8 +173,8 @@ public:
 
                     // NO CONDITION
 
-                    Operation *test_op = new TestMax( sd, new Variable(pred1_name, "predicate", pred_id, param_pointer_ids[i] ),
-                                                      new Variable("","constant",0));
+                    Operation *test_op = new TestMax( sd, new Variable(pred1_name, VariableType::PREDICATE, pred_id, param_pointer_ids[i] ),
+                                                      new Variable("",VariableType::CONSTANT,0));
                     test_act->addOperation( test_op );
 
                     _extra_actions.push_back( test_act );
@@ -186,9 +186,9 @@ public:
                         //8. cmp(register,0). Test if a register is 0
                         auto *cmp_act = new Action("test-min(" + pred1_name + ")");
                         // NO CONDS
-                        Operation *cmp_op = new Compare(sd, new Variable(pred1_name, "predicate", pred_id,
+                        Operation *cmp_op = new Compare(sd, new Variable(pred1_name, VariableType::PREDICATE, pred_id,
                                                                          param_pointer_ids[i]),
-                                                        new Variable("0", "constant", 0));
+                                                        new Variable("0", VariableType::CONSTANT, 0));
                         cmp_act->addOperation(cmp_op);
 
                         _extra_actions.push_back(cmp_act);
@@ -203,9 +203,9 @@ public:
                             auto *cmp_act = new Action("cmp(" + pred1_name + "," + pred2_name + ")");
                             // NO CONDS
                             Operation *cmp_op = new Compare(sd,
-                                                            new Variable(pred1_name, "predicate", pred_id,
+                                                            new Variable(pred1_name, VariableType::PREDICATE, pred_id,
                                                                          param_pointer_ids[i]),
-                                                            new Variable(pred2_name, "predicate", pred_id,
+                                                            new Variable(pred2_name, VariableType::PREDICATE, pred_id,
                                                                          param_pointer_ids[j]));
                             cmp_act->addOperation(cmp_op);
 
@@ -224,18 +224,18 @@ public:
         if( CARRY_FLAG ) num_of_conditions = 2;
 		_conds.resize( num_of_conditions );
 		_conds[ 0 ] = new Equals( sd,
-		        new Variable( "zf", "pointer", sd->getTypeID( "zf" ) ),
-		        new Variable( "1", "constant", 1 ) );
+		        new Variable( "zf", VariableType::POINTER, sd->getTypeID( "zf" ) ),
+		        new Variable( "1", VariableType::CONSTANT, 1 ) );
 		_conds[ 1 ] = new Equals( sd,
-		        new Variable( "zf", "pointer", sd->getTypeID( "zf" ) ),
-		        new Variable( "0", "constant", 0 ) );
+		        new Variable( "zf", VariableType::POINTER, sd->getTypeID( "zf" ) ),
+		        new Variable( "0", VariableType::CONSTANT, 0 ) );
         if( CARRY_FLAG ) {
             _conds[2] = new Equals(sd,
-                                   new Variable("cf", "pointer", sd->getTypeID("cf")),
-                                   new Variable("1", "constant", 1));
+                                   new Variable("cf", VariableType::POINTER, sd->getTypeID("cf")),
+                                   new Variable("1", VariableType::CONSTANT, 1));
             _conds[3] = new Equals(sd,
-                                   new Variable("cf", "pointer", sd->getTypeID("cf")),
-                                   new Variable("0", "constant", 0));
+                                   new Variable("cf", VariableType::POINTER, sd->getTypeID("cf")),
+                                   new Variable("0", VariableType::CONSTANT, 0));
             // Only End can be programmed in last line
             for( int from = 0; from + 1 < program_lines; from++ ){
                 for( int to = 0; to < program_lines; to++ ){

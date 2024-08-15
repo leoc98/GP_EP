@@ -5,18 +5,25 @@
 
 // Counters and Pointers represented as variables, 
 // where only the latters have access to registers
+typedef enum VARIABLE_TYPE {
+	CONSTANT,
+	POINTER,
+	PREDICATE,
+	EPISTEMIC,
+} VariableType;
+
 class Variable{
 public:
-	explicit Variable( const string &name = "1", const string &vtype = "constant",
+	explicit Variable( const string &name = "1", VariableType vtype = VariableType::CONSTANT,
               int id = 0, const vector< int > &param_ids = {} ){
-        assert(_param_ids.empty() or (!_param_ids.empty() and vtype == "predicate" ) );
-        assert( vtype == "constant" or vtype == "pointer" or vtype == "predicate" );
+        assert(_param_ids.empty() or (!_param_ids.empty() and vtype == VariableType::PREDICATE ) );
+        assert( vtype == VariableType::CONSTANT or vtype == VariableType::POINTER or vtype == VariableType::PREDICATE );
 		_name = name;
 		_vtype = vtype;
 		_id = id;
 		_param_ids = param_ids;
-		//if( (name[0] == '*' and vtype == "pointer") or vtype == "predicate")
-		if( vtype == "predicate" )
+		//if( (name[0] == '*' and vtype == VariableType::POINTER) or vtype == VariableType::PREDICATE)
+		if( vtype == VariableType::PREDICATE )
 		    _access_memory = true;
 		else _access_memory = false;
 	}
@@ -27,7 +34,7 @@ public:
 		_name = name;
 	}
 
-	void setVType( const string &vtype = "constant" ){
+	void setVType( const VariableType &vtype = VariableType::CONSTANT ){
 		_vtype = vtype;
 	}
 	
@@ -47,7 +54,7 @@ public:
 		return _name;
 	}
 	
-	string getVType() const{
+	VariableType getVType() const{
 		return _vtype;
 	}
 	
@@ -66,7 +73,7 @@ public:
 	string toString( bool info = false ) const{
 		string ret;
 		if( info )
-			ret = "[VARIABLE]: " + _vtype + " " ;
+			ret = "[VARIABLE]: " + to_string(static_cast<int>(_vtype)) + " ";
 		ret += _name;
 		if( info ){
 			ret += " with id: " + to_string( _id );
@@ -82,7 +89,7 @@ public:
 	
 private:
 	string _name; // full name, e.g. on(i,j), i, *i or 10
-	string _vtype; // predicate, pointer or constant
+	VariableType _vtype; // predicate, pointer or constant
 	int _id; // id of the first symbol
 	vector< int > _param_ids; // list of pointer ids or constants (only for predicates)
 	bool _access_memory;
