@@ -36,11 +36,11 @@ public:
 		return new State( this );
 	}
 
-	vector< vector< int > > getTypedPointers() const{
+	const vector< vector< int > >& getTypedPointers() const{
 	    return _typed_pointers;
 	}
 
-	vector< map< vector<int>, int > > getTypedRegisters() const{
+	const vector< map< vector<int>, int > >& getTypedRegisters() const{
 	    return _typed_registers;
 	}
 
@@ -135,7 +135,7 @@ public:
 		        state_vars[ int( state_vars.size() )-1 ].emplace_back( sreg.second );
             }
         }
-		return state_vars;
+		return std::move(state_vars);
 	}
 	
 	int size() const{
