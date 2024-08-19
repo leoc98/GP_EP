@@ -348,7 +348,14 @@ public:
 				cout << "INSTANCE #" << (id+1) << " SOLVED! [" << difftime(end_instance,start_instance) <<"]" << endl;
 			start_instance = end_instance;
             #else
-            if( error == -1 ){
+            if (error == -2) {
+				_failed_instance_id = id;
+				break;
+			} else if (error == -3) {
+				_failed_instance_id = id;
+				break;
+			} else if( error < 0 ){
+				// we need to handle the all other cases that has errors
                 _failed_instance_id = id;
                 errors++;
                 break;
@@ -357,13 +364,7 @@ public:
                     if( pss[i] ) delete pss[i];
                 }
                 return vector<ProgramState*>();*/
-            } else if (error == -2) {
-				_failed_instance_id = id;
-				break;
-			} else if (error == -3) {
-				_failed_instance_id = id;
-				break;
-			} 
+            } 
 			#endif
 		}
 
