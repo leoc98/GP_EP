@@ -71,11 +71,15 @@ int main(  int argc, const char* argv[] ){
 		return -3;
 	}
 
+	char time_buff[80];
+	strftime(time_buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&start));
+	string start_time( time_buff );
+
     size_t problem_pos = problem_folder.find_first_of( '/' );
-    string outfile = "experiments/" + dom->getName() + "_" + search_mode + "_" + to_string(program_lines) + heuristics;
+    string outfile = "experiments/" + dom->getName() + "_" + search_mode + "_" + to_string(program_lines) + heuristics + start_time;
     if( problem_pos != string::npos ){
         outfile = "experiments/" + problem_folder.substr( problem_pos + 1, problem_folder.length() - 2 - problem_pos )
-                + "_" + search_mode + "_" + to_string( program_lines ) + heuristics;
+                + "_" + search_mode + "_" + to_string( program_lines ) + heuristics + start_time;
 
     }
 
