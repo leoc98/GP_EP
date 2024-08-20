@@ -213,7 +213,7 @@ public:
 			return {};
 		}
 			
-		vector< Instruction* > vi = _gd->getInstructions( pc_max );
+		vector< Instruction* > vi = _gd->getApplicableInstructions( pc_max , p);
 		
 		// [1] Symmetry Breaking - only Gotos after CMP or TEST
 		bool only_gotos = false;

@@ -7,6 +7,7 @@
 #include "domain.h"
 #include "condition.h"
 #include "instruction.h"
+#include "generalized_domain_instructions_handler.h"
 
 class GeneralizedDomain{
 public:
@@ -303,14 +304,14 @@ public:
 		return nullptr;
 	}
 	
-	vector< vector< Instruction* > > getInstructions(){
+	vector< vector< Instruction* > > getAllInstructions(){
 		return _instructions_line;
 	}
 	
-	vector< Instruction* > getInstructions( int program_line ){
+	vector< Instruction* > getApplicableInstructions( int program_line, Program* program ){
 		if( program_line >= int( _instructions_line.size() ) )
 			return {};
-		return _instructions_line[ program_line ];
+		return applyHandler( program_line, _instructions_line[ program_line ], program );
 	}
 	
 	Instruction* getInstruction( int program_line, int id ){
@@ -326,6 +327,17 @@ public:
 	    }
 	    return nullptr;
 	}
+
+    void addHandler( GeneralizedDomainInstructionsHandler* handler ){
+        _handlers.push_back( handler );
+    }
+
+    vector< Instruction* > applyHandler( int program_line, vector< Instruction* > instructions, const Program* program ){
+        for( auto handler : _handlers ){
+            instructions = handler->filter( program_line, instructions, program);
+        }
+        return instructions;
+    }
 	
 	string toString(){
 		string ret = "[GENERALIZED DOMAIN]:\n";
@@ -344,6 +356,7 @@ private:
 	vector< vector< Instruction* > > _instructions_line;
 	vector< Condition* > _conds;
 	vector< Action* > _extra_actions;
+    vector< GeneralizedDomainInstructionsHandler* > _handlers;
 };
 
 #endif
