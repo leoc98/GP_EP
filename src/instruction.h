@@ -32,6 +32,8 @@ public:
 	}
 	
 	virtual int apply( ProgramState *ps ){ return 0; }	
+
+	virtual string getName() const{ return "UNDEFINED"; }
 	
 	virtual string toString( bool full_info ) const{ return "[INSTRUCTION] EMPTY\n"; }
 
@@ -70,7 +72,7 @@ public:
 		return res;
 	}
 	
-	virtual string getName() const{
+	virtual string getName() const override{
 		return _act->getName();
 	}
 	
@@ -113,6 +115,10 @@ public:
 		else ps->setLine( _dest_line );
 		
 		return 0;
+	}
+
+	virtual string getName() const override{
+		return "GOTO";
 	}
 	
 	string toString( bool full_info ) const override{
@@ -158,6 +164,10 @@ public:
 		
 	// 	return true;
 	// }
+
+	virtual string getName() const override{
+		return "END";
+	}
 	
 	string toString( bool full_info ) const override{
 		string ret = "end\n";
