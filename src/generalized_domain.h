@@ -292,6 +292,10 @@ public:
 		for(auto & extra_action : _extra_actions){
 			delete extra_action;
 		}
+
+        for (auto & handler : _handlers) {
+            delete handler;
+        }
 	}
 	
 	Instruction* searchInstruction( int program_line, const string &name ){
@@ -337,6 +341,14 @@ public:
             instructions = handler->filter( program_line, instructions, program);
         }
         return instructions;
+    }
+
+    string showPruneResult(){
+        string ret= "[GENERALIZED DOMAIN]:\n";
+        for( auto handler : _handlers ){
+            ret += handler->showPruneResult();
+        }
+        return ret;
     }
 	
 	string toString(){
