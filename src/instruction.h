@@ -141,11 +141,11 @@ public:
 	}
 
 	virtual string getSchema() const override{ 
-		return getName(); 
+		return "GOTO"; 
 	}
 
 	virtual string getName() const override{
-		return "GOTO";
+		return getSchema();
 	}
 	
 	string toString( bool full_info ) const override{
@@ -193,11 +193,11 @@ public:
 	// }
 
 	virtual string getSchema() const override{ 
-		return getName(); 
+		return "END";
 	}
 
 	virtual string getName() const override{
-		return "END";
+		return getName(); 
 	}
 	
 	string toString( bool full_info ) const override{

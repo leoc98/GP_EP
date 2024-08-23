@@ -31,4 +31,33 @@ private:
     int out_total;
 };
 
+class CascadeGotoFilter : public GeneralizedDomainInstructionsHandler {
+public:
+    CascadeGotoFilter(): in_total(0), out_total(0) {}
+    virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
+        in_total += instructions.size();
+        vector< Instruction* > history_instructions = program->getInstructions();
+        for (auto& instruction : instructions) {
+            if (instruction->getSchema() == "GOTO") {
+                int dest_line = static_cast<Goto*>(instruction)->getDestinationLine();
+                if (history_instructions[dest_line]->getSchema() == "GOTO") {
+                    instruction = instructions.back();
+                    instructions.pop_back();
+                }
+            }
+
+        }
+        out_total += instructions.size();
+
+        return instructions;
+    }
+    virtual string showPruneResult() override {
+        return "CascadeGotoFilter: " + to_string(in_total) + " -> " + to_string(out_total) + "\n";
+    }
+private:
+    unordered_map<string, vector<int>> prohibit_map;
+    int in_total;
+    int out_total;
+};
+
 #endif // STRUCTURAL_RESTRICTION_H
