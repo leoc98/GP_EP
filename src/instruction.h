@@ -39,9 +39,26 @@ public:
 	
 	virtual string toString( bool full_info ) const{ return "[INSTRUCTION] EMPTY\n"; }
 
+	virtual bool operator==(const Instruction *& other) {
+
+		return this->getSchema() == other->getSchema();
+	}
 protected:
 	vector< Condition* > _conds;
 };
+
+template<> struct std::hash<Instruction *> {
+	std::size_t operator()(Instruction * const& inst) const noexcept {
+        return std::hash<string>()(inst->getSchema()); // or use boost::hash_combine (see Discussion) https://en.cppreference.com/w/Talk:cpp/utility/hash
+    }
+};
+
+template<> struct std::hash<Instruction> {
+	std::size_t operator()(Instruction const& inst) const noexcept {
+        return std::hash<string>()(inst.getSchema()); // or use boost::hash_combine (see Discussion) https://en.cppreference.com/w/Talk:cpp/utility/hash
+    }
+};
+
 
 class PlanningAction : public Instruction{
 public:

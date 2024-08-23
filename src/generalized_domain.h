@@ -338,7 +338,7 @@ public:
 
     vector< Instruction* > applyHandler( int program_line, vector< Instruction* > instructions, const Program* program ){
         for( auto handler : _handlers ){
-            instructions = handler->filter( program_line, instructions, program);
+            handler->filter( program_line, instructions, program);
         }
         return instructions;
     }
