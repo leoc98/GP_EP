@@ -38,7 +38,7 @@ public:
                     continue;
 
                 //1. inc(pointer). Increase a pointer
-                auto *inc_act = new Action("inc("+p+")");
+                auto *inc_act = new Action("inc", "("+p+")");
 
                 Condition *inc_cond = new Add( sd,
                         new Variable( p, VariableType::POINTER, sd->getTypeID(p) ),
@@ -55,7 +55,7 @@ public:
                 _instructions_line[ line ].push_back( inc_ins );
 
                 //2. dec(pointer). Decrease a pointer
-                auto *dec_act = new Action("dec("+p+")");
+                auto *dec_act = new Action("dec", "("+p+")");
 
                 Condition *dec_cond = new Subtract( sd,
                         new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
@@ -73,7 +73,7 @@ public:
 
                 /* 3. & 4. are not needed with conditional effects
                 //3. test-max(pointer). Test if a pointer is pointing the last typed element
-                Action *test_act = new Action( "test-max("+p+")" );
+                Action *test_act = new Action( "test-max", "("+p+")" );
 
                 // NO CONDITION
 
@@ -86,7 +86,7 @@ public:
                 _instructions_line[ line ].push_back( test_ins );
 
                 //4. cmp(pointer,0). Test if a pointer is pointing the first typed element
-                Action *cmp_act = new Action("test-min("+p+")");
+                Action *cmp_act = new Action("test-min", "("+p+")");
                 // NO CONDS
                 Operation *cmp_op = new Compare( sd,
                                                  new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
@@ -99,7 +99,7 @@ public:
                 */
 
                 // New 3. clear a pointer (reset the pointer to the first position)
-                auto *clear_act = new Action( "clear("+p+")" );
+                auto *clear_act = new Action( "clear", "("+p+")" );
                 // NO CONDITION
                 Operation *clear_op = new Assign(sd, new Variable(p,VariableType::POINTER,sd->getTypeID(p)),
                                                  new Variable("",VariableType::CONSTANT,0));
@@ -114,7 +114,7 @@ public:
                         continue;
 
                     //5. set(pointer1,pointer2). Assign pointer2 to pointer1
-                    auto *set_act = new Action("set(" + p + "," + p2 + ")");
+                    auto *set_act = new Action("set", "(" + p + "," + p2 + ")");
                     //NO CONDS
                     Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p )),
                                                       new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ) );
@@ -130,7 +130,7 @@ public:
 
                     if( CMP_INSTRUCTION_ALLOWED ) {
                         //6. cmp(pointer1,pointer2). CMP instruction between two pointers
-                        auto *cmp_act = new Action("cmp(" + p + "," + p2 + ")");
+                        auto *cmp_act = new Action("cmp", "(" + p + "," + p2 + ")");
                         // NO CONDS
                         Operation *cmp_op = new Compare(sd,
                                                         new Variable(p, VariableType::POINTER, sd->getTypeID(p)),
@@ -170,7 +170,7 @@ public:
 
                     /* // Not needed with conditional effects
                     //7. test-max(register). Test if a register is MAX_VAL
-                    Action *test_act = new Action( "test-max("+pred1_name+")" );
+                    Action *test_act = new Action( "test-max", "("+pred1_name+")" );
 
                     // NO CONDITION
 
@@ -185,7 +185,7 @@ public:
                     // 8. & 9. only relevant for numerical domains
                     if( TESTS_ALLOWED ) {
                         //8. cmp(register,0). Test if a register is 0
-                        auto *cmp_act = new Action("test-min(" + pred1_name + ")");
+                        auto *cmp_act = new Action("test-min", "(" + pred1_name + ")");
                         // NO CONDS
                         Operation *cmp_op = new Compare(sd, new Variable(pred1_name, VariableType::PREDICATE, pred_id,
                                                                          param_pointer_ids[i]),
@@ -201,7 +201,7 @@ public:
                         for (unsigned j = i + 1; j < pointer_params.size(); j++) {
                             auto pred2_name = pred_type + "(" + pointer_params[j] + ")";
                             //9. cmp(register1,register2). CMP instruction between two registers
-                            auto *cmp_act = new Action("cmp(" + pred1_name + "," + pred2_name + ")");
+                            auto *cmp_act = new Action("cmp", "(" + pred1_name + "," + pred2_name + ")");
                             // NO CONDS
                             Operation *cmp_op = new Compare(sd,
                                                             new Variable(pred1_name, VariableType::PREDICATE, pred_id,

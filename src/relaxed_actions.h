@@ -10,7 +10,7 @@
 class RelaxedAction : public  Action {
 public:
     explicit RelaxedAction( StateDescriptor *sd, const string &name = "",
-                            const string &atype = "memory") : Action(name, atype){
+                            const string &atype = "memory") : Action(name, "", atype){
         int num_of_predicates = (int)sd->getPredicateTypes().size();
         _prec_facts.resize( num_of_predicates );
         _eff_facts.resize( num_of_predicates );

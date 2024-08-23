@@ -6,10 +6,12 @@
 #include "state_descriptor.h"
 #include "condition.h"
 #include "operation.h"
-
 class Action{
 public:
-	explicit Action( const string &name = "", const string &atype = "math" ) : _name( name ), _atype( atype ){}
+	using action_schema = string;
+	using action_parameter = string;
+
+	explicit Action( const action_schema &schema = "", const action_parameter& param = "",  const string &atype = "math" ) : _name( {schema, param} ), _atype( atype ){}
 	
 	virtual ~Action(){
 		for(auto & precondition : _preconditions){
@@ -60,8 +62,12 @@ public:
 		_effects.push_back( op );
 	}
 
+	virtual action_schema getSchema() const {
+		return _name.first;
+	}
+
 	virtual string getName() const{
-		return _name;
+		return _name.first + _name.second;
 	}
 	
 	virtual string getType() const{
@@ -77,8 +83,8 @@ public:
 	}
 	
 	virtual string toString( bool full_info ) const{
-		if( !full_info ) return _name+"\n";
-		string ret = "[ACTION]: " + _name + "\n";
+		if( !full_info ) return getName()+"\n";
+		string ret = "[ACTION]: " + getName() + "\n";
 		ret += "TYPE: " + _atype + "\n";
 		ret += "PRECONDITIONS:\n";
 		for(auto precondition : _preconditions){
@@ -92,7 +98,7 @@ public:
 	}
 	
 private:
-	string _name;
+	pair<action_schema, action_parameter> _name;
 	string _atype;
 	vector< Condition* > _preconditions;
 	vector< Operation* > _effects;

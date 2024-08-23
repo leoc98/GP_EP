@@ -235,7 +235,7 @@ public:
             string grounded_name = act_name + "(" + gp + ")";
 
             // Only create grounded actions
-            dom->addAction( new Action( grounded_name, act_type ) );
+            dom->addAction( new Action( act_name, "(" + gp + ")", act_type ) );
             Action *act = dom->getAction( grounded_name );
 
             for( auto c : conditions ){

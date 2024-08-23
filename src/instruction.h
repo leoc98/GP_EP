@@ -31,7 +31,9 @@ public:
 		return false;
 	}
 	
-	virtual int apply( ProgramState *ps ){ return 0; }	
+	virtual int apply( ProgramState *ps ){ return 0; }
+
+	virtual string getSchema() const{ return "UNDEFINED"; }
 
 	virtual string getName() const{ return "UNDEFINED"; }
 	
@@ -70,6 +72,10 @@ public:
 		ps->setLine( line + 1 );
 		
 		return res;
+	}
+
+	virtual string getSchema() const override{ 
+		return _act->getSchema(); 
 	}
 	
 	virtual string getName() const override{
@@ -115,6 +121,10 @@ public:
 		else ps->setLine( _dest_line );
 		
 		return 0;
+	}
+
+	virtual string getSchema() const override{ 
+		return getName(); 
 	}
 
 	virtual string getName() const override{
@@ -164,6 +174,10 @@ public:
 		
 	// 	return true;
 	// }
+
+	virtual string getSchema() const override{ 
+		return getName(); 
+	}
 
 	virtual string getName() const override{
 		return "END";
