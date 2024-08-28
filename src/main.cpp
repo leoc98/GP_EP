@@ -9,6 +9,8 @@
 #include "landmark_graph.h"
 #include "heuristic.h"
 #include "engine.h"
+#include "GDIH/novelty_instruction_filter.h"
+#include "GDIH/structual_restriction.h"
 
 int main(  int argc, const char* argv[] ){
 	if( argc < 4 ){
@@ -122,7 +124,41 @@ int main(  int argc, const char* argv[] ){
 	time( &gpp_time );
 	cout << "[INFO] Generalized Planning Problem created. [" << difftime( gpp_time, parse_time ) << "]" << endl;
 	
-	auto *gd = new GeneralizedDomain( dom, program_lines );
+	auto *gd = new GeneralizedDomain(dom, program_lines);
+
+	// gd->addHandler( new NoveltyInstructionFilter(2) );
+	ifstream ifs_inst_filter("inst_filter.txt");
+	while (ifs_inst_filter)
+	{
+		string line;
+		getline(ifs_inst_filter, line);
+		if (line[0] == '#'){
+			continue;
+		}
+		else if (line.compare("NoveltyInstructionFilter") == 0)
+		{
+			int novelty;
+			getline(ifs_inst_filter, line);
+			novelty = stoi(line);
+			gd->addHandler(new NoveltyInstructionFilter(novelty));
+		}
+		else if (line.compare("LineProhibitFilter") == 0)
+		{
+			gd->addHandler(new LineProhibitFilter({
+				{"clear", {0}},
+				{"dec", {0}},
+				{"set", {0}}
+			}));
+		}
+		else if (line.compare("CascadeGotoFilter") == 0)
+		{
+			gd->addHandler(new CascadeGotoFilter());
+		}
+		else
+		{
+			break;
+		}
+	}
 
 	time_t gd_time;
 	time( &gd_time );
@@ -221,8 +257,10 @@ int main(  int argc, const char* argv[] ){
 		cout << output;
 	}
 
-	ofstream ofs( outfile + ".out" );
-	ofs << output;
+	cout << gd->showPruneResult();
+
+	ofstream ofs(outfile + ".out");
+	ofs << output << gd->showPruneResult();
 	ofs.close();
 	
 	cout << "[INFO] Experiments file: " << outfile << ".out" << endl;	
