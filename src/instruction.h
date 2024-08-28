@@ -113,6 +113,10 @@ private:
 	Action *_act;
 };
 
+class RAMAction : public PlanningAction {
+	using PlanningAction::PlanningAction;
+};
+
 class Goto : public Instruction{
 public:
 	explicit Goto( int dest = 0 ){

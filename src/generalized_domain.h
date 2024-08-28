@@ -51,7 +51,7 @@ public:
                 inc_act->addOperation( add_assign_op );
 
                 _extra_actions.push_back( inc_act );
-                Instruction *inc_ins = new PlanningAction( inc_act );
+                Instruction *inc_ins = new RAMAction( inc_act );
                 _instructions_line[ line ].push_back( inc_ins );
 
                 //2. dec(pointer). Decrease a pointer
@@ -68,7 +68,7 @@ public:
                 dec_act->addOperation( sub_assign_op );
 
                 _extra_actions.push_back( dec_act );
-                Instruction *dec_ins = new PlanningAction( dec_act );
+                Instruction *dec_ins = new RAMAction( dec_act );
                 _instructions_line[ line ].push_back( dec_ins );
 
                 /* 3. & 4. are not needed with conditional effects
@@ -82,7 +82,7 @@ public:
                 test_act->addOperation( test_op );
 
                 _extra_actions.push_back( test_act );
-                Instruction *test_ins = new PlanningAction( test_act );
+                Instruction *test_ins = new RAMAction( test_act );
                 _instructions_line[ line ].push_back( test_ins );
 
                 //4. cmp(pointer,0). Test if a pointer is pointing the first typed element
@@ -94,7 +94,7 @@ public:
                 cmp_act->addOperation( cmp_op );
 
                 _extra_actions.push_back( cmp_act );
-                Instruction *cmp_ins = new PlanningAction( cmp_act );
+                Instruction *cmp_ins = new RAMAction( cmp_act );
                 _instructions_line[ line ].push_back( cmp_ins );
                 */
 
@@ -105,7 +105,7 @@ public:
                                                  new Variable("",VariableType::CONSTANT,0));
                 clear_act->addOperation(clear_op);
                 _extra_actions.push_back( clear_act );
-                Instruction *clear_ins = new PlanningAction( clear_act );
+                Instruction *clear_ins = new RAMAction( clear_act );
                 _instructions_line[ line ].push_back( clear_ins );
 
                 for( const auto& p2 : v_pointers ){
@@ -121,7 +121,7 @@ public:
                     set_act->addOperation(assign_op);
 
                     _extra_actions.push_back(set_act);
-                    Instruction *set_ins = new PlanningAction(set_act);
+                    Instruction *set_ins = new RAMAction(set_act);
                     _instructions_line[line].push_back(set_ins);
 
                     // [3] Symmetry breaking - allow to compare only in one direction
@@ -138,7 +138,7 @@ public:
                         cmp_act->addOperation(cmp_op);
 
                         _extra_actions.push_back(cmp_act);
-                        Instruction *cmp_ins = new PlanningAction(cmp_act);
+                        Instruction *cmp_ins = new RAMAction(cmp_act);
                         _instructions_line[line].push_back(cmp_ins);
                     }
                 }
@@ -179,7 +179,7 @@ public:
                     test_act->addOperation( test_op );
 
                     _extra_actions.push_back( test_act );
-                    Instruction *test_ins = new PlanningAction( test_act );
+                    Instruction *test_ins = new RAMAction( test_act );
                     _instructions_line[ line ].push_back( test_ins );
                     */
                     // 8. & 9. only relevant for numerical domains
@@ -193,7 +193,7 @@ public:
                         cmp_act->addOperation(cmp_op);
 
                         _extra_actions.push_back(cmp_act);
-                        Instruction *cmp_ins = new PlanningAction(cmp_act);
+                        Instruction *cmp_ins = new RAMAction(cmp_act);
                         _instructions_line[line].push_back(cmp_ins);
                     }
 
@@ -211,7 +211,7 @@ public:
                             cmp_act->addOperation(cmp_op);
 
                             _extra_actions.push_back(cmp_act);
-                            Instruction *cmp_ins = new PlanningAction(cmp_act);
+                            Instruction *cmp_ins = new RAMAction(cmp_act);
                             _instructions_line[line].push_back(cmp_ins);
                         }
                     }
