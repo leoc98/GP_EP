@@ -10,19 +10,24 @@ public:
     virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
         unordered_map< string, int > instruction_cnt;
         vector< Instruction* > history_instructions = program->getInstructions();
+
+        auto getNoveltyInstructionFilterName = [](Instruction *inst) -> string {
+            // RAM Action should not only consider schema
+            RAMAction * ram_action = dynamic_cast<RAMAction *>(inst);
+            return ram_action?ram_action->getName() : inst->getSchema();
+        };
+
         for (int i = 0; i < program_line; i++) {
             // ignore GOTO instructions
-            string schema = history_instructions[i]->getSchema();
-            if (schema == "GOTO") {
-                continue;
+            if (auto schema = getNoveltyInstructionFilterName(history_instructions[i]); schema != "GOTO") {
+                instruction_cnt[schema]++;
             }
-            instruction_cnt[schema]++;
         }
 
         // vector< Instruction* > filtered_instructions;
         in_total += instructions.size();
         for (auto& instruction : instructions) {
-            if (instruction_cnt[instruction->getSchema()] + 1 > novelty_threshold) {
+            if (instruction_cnt[getNoveltyInstructionFilterName(instruction)] + 1 > novelty_threshold) {
                 // filtered_instructions.emplace_back(instruction);
                 instruction = instructions.back();
                 instructions.pop_back();
