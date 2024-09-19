@@ -16,19 +16,22 @@ class Variable{
 public:
 	explicit Variable( const string &name = "1", VariableType vtype = VariableType::CONSTANT,
               int id = 0, const vector< int > &param_ids = {} ){
-        assert(_param_ids.empty() or (!_param_ids.empty() and vtype == VariableType::PREDICATE ) );
-        assert( vtype == VariableType::CONSTANT or vtype == VariableType::POINTER or vtype == VariableType::PREDICATE );
+        assert(_param_ids.empty() or (!_param_ids.empty() and (vtype == VariableType::PREDICATE or vtype == VariableType::EPISTEMIC) ) );
 		_name = name;
 		_vtype = vtype;
 		_id = id;
 		_param_ids = param_ids;
 		//if( (name[0] == '*' and vtype == VariableType::POINTER) or vtype == VariableType::PREDICATE)
+		
+		/*
+			not used
+		*/
 		if( vtype == VariableType::PREDICATE )
 		    _access_memory = true;
 		else _access_memory = false;
 	}
 	
-	~Variable()= default;
+	virtual ~Variable()= default;
 	
 	void setName( const string &name = "1" ){
 		_name = name;
@@ -70,7 +73,7 @@ public:
 		return _access_memory;
 	}
 	
-	string toString( bool info = false ) const{
+	virtual string toString( bool info = false ) const{
 		string ret;
 		if( info )
 			ret = "[VARIABLE]: " + to_string(static_cast<int>(_vtype)) + " ";

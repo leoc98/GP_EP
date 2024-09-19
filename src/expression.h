@@ -94,7 +94,7 @@ public:
 		    return s->getRegister( sd, pred_type, param_obj_idx );
 		} else if ( vtype == VariableType::EPISTEMIC ){
 			// TODO: handle epistemic
-			return -1;
+			return s->getLatestHistory( sd, id );
 		}
 
 		// Otherwise is a constant
@@ -102,9 +102,6 @@ public:
     }
         
     // Return the left-hand side value
-	/*
-	TODO: need support ep expression
-	*/
     virtual int getLHS( StateDescriptor *sd, const State* s ) const{
 		return getVarNum( sd, s, _lhs );
 	}

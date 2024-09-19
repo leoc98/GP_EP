@@ -10,6 +10,7 @@
 #include "action.h"
 #include "domain.h"
 #include "instance.h"
+#include "EpistemicModel/epistemic_variable.h"
 
 class Parser{
 public:
@@ -434,15 +435,66 @@ public:
             return false;
         }
 
-        ifs >> word;
+        auto findMatchBrace = [](const string &expression, int start_pos) -> int {
+            int brace_count = 0;
+            for( unsigned i = start_pos; i < expression.size(); i++ ){
+                if( expression[i] == '(' ) brace_count++;
+                if( expression[i] == ')' ) brace_count--;
+                if( brace_count == 0 ) return i;
+            }
+            return -1;
+        };
 
+        unordered_set<epistemic::predicate> ep_set;
+        ifs >> word;
         while( !ifs.eof() && word == "(" ){
             string lhs_name, cond_op, rhs_name;
 
-            ifs >> lhs_name >> cond_op >> rhs_name;
+            Variable *lhs =  nullptr;
+            Variable *rhs =  nullptr;
 
-            Variable *lhs = readGroundedVar(sd, lhs_name, ins );
-            Variable *rhs = readGroundedVar(sd, rhs_name, ins );
+            // ep expression like ( (:ep b [b] b [a] ( face(c) = 1 )) = 1)
+            ifs >> lhs_name;
+            if (lhs_name[0] == '(') {
+                while (findMatchBrace(lhs_name, 0) == -1) {
+                    string temp;
+                    ifs >> temp;
+                    lhs_name += " " + temp;
+                }
+                const char ep_begin[] = "(:ep ";
+                const char ep_end[] = ")";
+                if (lhs_name.size() < strlen(ep_begin) + strlen(ep_end) ){
+                    cerr << errorMessage( "GOAL EPExpression:", lhs_name ) << endl;
+                    return false;
+                }
+                string ep_exp = lhs_name.substr(strlen(ep_begin), lhs_name.size() - strlen(ep_end) - strlen(ep_begin));
+
+                // regist epistemic predicate
+                vector< epistemic::predicate > ep_predicates = EpistemicVariable::EpistemicPredicateResolve(ep_exp);
+                for (const auto& ep_pred : ep_predicates) {
+                    if (ep_set.find(ep_pred) == ep_set.end()) {
+                        ep_set.insert(ep_pred);
+                        // add epistemic name into init state
+                        init->addEpistemicPredicate(ep_pred);
+                    }
+                }
+
+                // parse epistemic expression
+                string ep_condition = ep_exp.substr(0+ep_exp.find('(')+2, ep_exp.size() - (ep_exp.find('(')+2)-2);
+                string ep_condition_lhs = ep_condition.substr(0, ep_condition.find(' '));
+                string ep_condition_rhs = ep_condition.substr(ep_condition.find(' ')+3, ep_condition.size() - (ep_condition.find(' ')+3));
+                Condition *ep_cond = readCondition(sd, "=", readGroundedVar(sd, ep_condition_lhs, ins), readGroundedVar(sd, ep_condition_rhs, ins));
+                lhs = new EpistemicVariable(ep_exp, ep_cond);
+
+
+
+            } else {
+                lhs = readGroundedVar(sd, lhs_name, ins );
+            }
+
+            
+            ifs >> cond_op >> rhs_name;
+            rhs = readGroundedVar(sd, rhs_name, ins );
             Condition *cond = readCondition( sd, cond_op, lhs, rhs );
 
             ins->addCondition( cond );
