@@ -3,6 +3,7 @@
 
 //#include<bits/stdc++.h>
 #include "stdc++.h"
+#include "EpistemicModel/epistemic_common.h"
 
 #define PROGRAM_FREQUENCY 10000
 #define INFO false
