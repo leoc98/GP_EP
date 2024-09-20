@@ -231,7 +231,7 @@ public:
 
     void build_relaxed_graph() {
         auto sd = _dom->getStateDescriptor();
-        auto init = _ins->getInitialState()->getTypedRegisters();
+        auto init = _ins->getInitialState()->getLatestTypedRegisters();
         auto pred_names = sd->getPredicateTypes();
         auto num_of_preds = (int)pred_names.size();
 

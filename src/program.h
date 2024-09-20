@@ -115,7 +115,7 @@ public:
 
 	static bool checkDeadEnd(StateDescriptor *sd, ProgramState *ps, LandmarkGraph *lm, int &error ){
 	    unique_ptr<RelaxedState> rs = make_unique<RelaxedState>( sd );
-	    auto reg = ps->getState()->getTypedRegisters();
+	    auto reg = ps->getState()->getLatestTypedRegisters();
 	    for( int pred_idx = 0; pred_idx < (int)reg.size(); pred_idx++ ) {
 	        for( const auto& m : reg[ pred_idx ] )
                 rs->addFact(pred_idx, m.first, m.second );

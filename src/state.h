@@ -3,16 +3,26 @@
 
 #include "common.h"
 #include "state_descriptor.h"
+#include "state_type.h"
+#include "EpistemicModel/epistemic_model.h"
 
 class State{
 public:
+    using predicate = StateType::predicate;
+    using predicates = StateType::predicates;    
     // Default constructor
-    State(){
-        _instance_id = 0;
-    }
+    // State(){
+    //     _instance_id = 0;
+    // }
 
     // Constructor mainly used for initial states
-	explicit State( StateDescriptor *sd, int instance_id = 0 ){
+	explicit State( StateDescriptor *sd, int instance_id = 0 ):
+            // initial global state
+            _typed_epistemic(1), 
+            _epistemic_string_to_id({{"", 0}}),
+            _epistemic_history({{_typed_epistemic[0],{}}}), 
+            _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second)
+    {
         auto var_types = sd->getVarTypes();
         _typed_pointers.resize( var_types.size() );
         for( int i = 0; i < int( var_types.size() ); i++ ){
@@ -21,15 +31,21 @@ public:
         }
 
         auto pred_types = sd->getPredicateTypes();
-        _typed_registers.resize( pred_types.size() );
+        _typed_registers.push_back( predicates( pred_types.size() ) );
+        // _typed_registers.back().resize( pred_types.size() );
         _instance_id = instance_id;
 	}
 
 	// Constructor mainly used to make copies and propagate effects
-	explicit State( State *s ){
+	explicit State( State *s ):
+            _typed_epistemic(s->_typed_epistemic),
+            _epistemic_string_to_id(s->_epistemic_string_to_id),
+            _epistemic_history(s->_epistemic_history),
+            _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second),
+            _lastest_history_index(s->_lastest_history_index)
+    {
 		_typed_pointers = s->getTypedPointers();
-		_typed_registers = s->getTypedRegisters();
-		_instance_id = s->getInstanceID();
+        _instance_id = s->getInstanceID();
 	}
 	
 	State* copy() {
@@ -40,16 +56,9 @@ public:
 	    return _typed_pointers;
 	}
 
-	const vector< map< vector<int>, int > >& getTypedRegisters() const{
-	    return _typed_registers;
-	}
 
 	void setPointersSize( unsigned p_size ){
         _typed_pointers.resize( p_size );
-    }
-
-    void setRegistersSize( unsigned r_size ){
-        _typed_registers.resize( r_size );
     }
 
     void addPointer( StateDescriptor *sd, const string &var_type, const string &pointer_name ){
@@ -102,8 +111,8 @@ public:
     void addRegister( StateDescriptor *sd, const string &pred_type, const vector<int> &var_obj_idx, int value = 1 ){
         auto var_id_list = sd->getPredicateVarTypeIDs( pred_type );
         auto pred_idx = sd->getPredicateIDX( pred_type );
-        assert( pred_idx < (int)_typed_registers.size() );
-        _typed_registers[ pred_idx ][ var_obj_idx ] = value;
+        assert( pred_idx < (int)_typed_registers.back().size() );
+        _typed_registers.back()[ pred_idx ][ var_obj_idx ] = value;
     }
 
     // In "value" is encoded the var-object binding
@@ -115,18 +124,81 @@ public:
             _typed_registers[ pred_idx ].erase( it );
     }*/
 
-    int getRegister( StateDescriptor *sd, const string &pred_type, const vector<int> &var_obj_idx ) const{
+
+    int getRegister( StateDescriptor *sd, 
+    const string &pred_type, 
+    const vector<int> &var_obj_idx, 
+    const predicates& state_register) const{
         auto pred_idx = sd->getPredicateIDX( pred_type );
-        assert( pred_idx < (int)_typed_registers.size() );
-        auto it = _typed_registers[ pred_idx ].find( var_obj_idx );
-        if( it == _typed_registers[ pred_idx ].end() )
+        assert( pred_idx < (int)state_register.size() );
+        auto it = state_register[ pred_idx ].find( var_obj_idx );
+        if( it == state_register[ pred_idx ].end() )
             return 0;
         return (it->second);
+    }
+
+    int getRegister( StateDescriptor *sd, 
+    const string &pred_type, const vector<int> &var_obj_idx) const{
+        return getRegister(sd, pred_type, var_obj_idx, _typed_registers.back());
+    }
+
+    void addEpistemicPredicate( const epistemic::predicate &epistemic_type){
+        _typed_epistemic.emplace_back( epistemic_type );
+        _epistemic_string_to_id[ epistemic_type.getName() ] = _typed_epistemic.size() - 1;
+        _epistemic_history.insert( { epistemic_type, {} } );
+    }
+
+    void generateEpistemicHistory( const epistemic::predicate &epistemic_type) {
+        assert(_epistemic_string_to_id.find(epistemic_type.getName()) != _epistemic_string_to_id.end());
+        auto history_it = _epistemic_history.find(_typed_epistemic[_epistemic_string_to_id[epistemic_type.getName()]]);
+        assert(history_it != _epistemic_history.end());
+        
+        
+        epistemic::predicate& parent_predicate = _typed_epistemic[_epistemic_string_to_id[epistemic_type.getParentPredicate()]];
+        history_it->second.emplace_back(
+            EpistemicModel::updateLatestHistory(
+                epistemic_type, getEpistemicHistory(parent_predicate, _lastest_history_index)
+            )
+        );
+    }
+
+    vector<predicates>& getEpistemicHistory(const epistemic::predicate &epistemic_type, size_t history_length) {
+        assert(_epistemic_history.find(epistemic_type) != _epistemic_history.end());
+        if (_epistemic_history[epistemic_type].size() < history_length) {
+            generateEpistemicHistory(epistemic_type);
+        }
+        return _epistemic_history[epistemic_type];
+            
+    }
+
+    vector<predicates>& getEpistemicHistory(const string &epistemic_name, size_t history_length) {
+        return getEpistemicHistory(_typed_epistemic[_epistemic_string_to_id[epistemic_name]], history_length);
+    }
+
+    void newGlobalState() {
+        _typed_registers.push_back(_typed_registers.back());
+    }
+
+    void updateEpistemicHistory() {
+        if (_typed_epistemic.empty()) {
+            return;
+        }
+        _lastest_history_index++;
+        for (const auto& epistemic_type : _typed_epistemic) {
+            getEpistemicHistory(epistemic_type, _lastest_history_index);
+        }
+    }
+
+    int getLatestEpistemicHistory( StateDescriptor *sd, int epistemic_expression_id ) const {
+
+        // TODO: 
+        
+        return -1;
     }
 	
 	vector< vector< int > > getStateVars() const{
 		vector< vector< int > > state_vars = _typed_pointers;
-		for( const auto& pred_regs : _typed_registers ) {
+		for( const auto& pred_regs : _typed_registers.back() ) {
 		    for( const auto& sreg : pred_regs) {
 		        // add only strictly positive valued predicates
 		        if( sreg.second == 0 )
@@ -155,9 +227,9 @@ public:
                 ret += " " + to_string(p);
             }
         }
-		for( unsigned i = 0; i < _typed_registers.size(); i++ ){
+		for( unsigned i = 0; i < _typed_registers.back().size(); i++ ){
             ret += "\nREGISTERS #" + to_string(i) + ":";
-            for( const auto& sv : _typed_registers[ i ] ){
+            for( const auto& sv : _typed_registers.back()[ i ] ){
                 ret += " (";
                 for( int k = 0; k < int( sv.first.size()); k++ ){
                     ret += (k?",":"") + to_string( sv.first[k] );
@@ -191,7 +263,7 @@ public:
 		        ret += (j?",":"") + v_names[j];
 		    }
 		    ret += "):";
-		    for( const auto& sv : _typed_registers[ i ] ){
+		    for( const auto& sv : _typed_registers.back()[ i ] ){
 		        ret += " (";
 		        for( int k = 0; k < int( sv.first.size()); k++ ){
 		            ret += (k?",":"") + to_string( sv.first[k] );
@@ -212,9 +284,22 @@ public:
         return _instance_id;
     }
 
+    State::predicates& getLatestTypedRegisters() {
+        return getEpistemicHistory("",_lastest_history_index).back();
+    }
+
+
 private:
     vector< vector< int > > _typed_pointers; // VarType -> {pointer1 = value1; ...; pointerN = valueN }
-	vector< map< vector< int >, int > > _typed_registers; // PredType ( size = |Obj1| x ... x |ObjM|;  or size=1 for 0-ary)
+	/*
+        key will be like "O [a] phi", "O [a] F [b] phi", "O [a] F [b] phi"
+    */
+
+    vector< epistemic::predicate > _typed_epistemic;
+    unordered_map< string, int > _epistemic_string_to_id;
+    std::unordered_map < epistemic::predicate, epistemic::history> _epistemic_history; // Epistemic history ( size = len(history) x required_history_type)
+	epistemic::history& _typed_registers; // PredType ( size = |Obj1| x ... x |ObjM|;  or size=1 for 0-ary)
+    size_t _lastest_history_index = 0;
 	int _instance_id;
 };
 

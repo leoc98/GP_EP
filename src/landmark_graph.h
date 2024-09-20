@@ -27,7 +27,7 @@ public:
         // Precompute initial state
         auto sd = _dom->getStateDescriptor();
         unique_ptr<RelaxedState> rs = make_unique<RelaxedState>( sd );
-        auto init_reg = i->getInitialState()->getTypedRegisters();
+        auto init_reg = i->getInitialState()->getLatestTypedRegisters();
         for( int pred_idx = 0; pred_idx < (int)init_reg.size(); pred_idx++ ){
             for( const auto& m : init_reg[ pred_idx ] ){
                 rs->addFact( pred_idx, m.first, m.second );

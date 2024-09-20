@@ -70,7 +70,7 @@ public:
     }
 
     bool holds( RelaxedGraph *rg, State *s ) const{
-        auto reg = s->getTypedRegisters();
+        auto reg = s->getLatestTypedRegisters();
         for( auto f_id : _fact_ids ){
             auto fact = rg->getFact( f_id ); // fact = < < pred_idx, objs >, value >
             auto it = reg[ fact.first.first ].find( fact.first.second );
