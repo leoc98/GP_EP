@@ -483,8 +483,7 @@ public:
                 string ep_condition = ep_exp.substr(0+ep_exp.find('(')+2, ep_exp.size() - (ep_exp.find('(')+2)-2);
                 string ep_condition_lhs = ep_condition.substr(0, ep_condition.find(' '));
                 string ep_condition_rhs = ep_condition.substr(ep_condition.find(' ')+3, ep_condition.size() - (ep_condition.find(' ')+3));
-                Condition *ep_cond = readCondition(sd, "=", readGroundedVar(sd, ep_condition_lhs, ins), readGroundedVar(sd, ep_condition_rhs, ins));
-                lhs = new EpistemicVariable(ep_exp, ep_cond);
+                lhs = new EpistemicVariable(ep_exp, readGroundedVar(sd, ep_condition_lhs, ins), readGroundedVar(sd, ep_condition_rhs, ins));
 
 
 
@@ -506,6 +505,11 @@ public:
             }
             ifs >> word;
         }
+
+        /*
+            generate perspective for initial state
+        */
+        init->updateEpistemicHistory();
 
         ifs.close();
 

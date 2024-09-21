@@ -5,6 +5,7 @@
 #include "state_descriptor.h"
 #include "state_type.h"
 #include "EpistemicModel/epistemic_model.h"
+#include "EpistemicModel/epistemic_variable.h"
 
 class State{
 public:
@@ -154,15 +155,15 @@ public:
         assert(history_it != _epistemic_history.end());
         
         
-        epistemic::predicate& parent_predicate = _typed_epistemic[_epistemic_string_to_id[epistemic_type.getParentPredicate()]];
+        epistemic::predicate& depend_predicate = _typed_epistemic[_epistemic_string_to_id[epistemic_type.getDependPredicate()]];
         history_it->second.emplace_back(
             EpistemicModel::updateLatestHistory(
-                epistemic_type, getEpistemicHistory(parent_predicate, _lastest_history_index)
+                epistemic_type, getEpistemicHistory(depend_predicate, _lastest_history_index)
             )
         );
     }
 
-    vector<predicates>& getEpistemicHistory(const epistemic::predicate &epistemic_type, size_t history_length) {
+    epistemic::history& getEpistemicHistory(const epistemic::predicate &epistemic_type, size_t history_length) {
         assert(_epistemic_history.find(epistemic_type) != _epistemic_history.end());
         if (_epistemic_history[epistemic_type].size() < history_length) {
             generateEpistemicHistory(epistemic_type);
@@ -171,8 +172,13 @@ public:
             
     }
 
-    vector<predicates>& getEpistemicHistory(const string &epistemic_name, size_t history_length) {
+    epistemic::history& getEpistemicHistory(const string &epistemic_name, size_t history_length) {
         return getEpistemicHistory(_typed_epistemic[_epistemic_string_to_id[epistemic_name]], history_length);
+    }
+
+    const epistemic::history& getConstEpistemicHistory(const string &epistemic_name) const {
+        int epistemic_index = _epistemic_string_to_id.find(epistemic_name)->second;
+        return _epistemic_history.find(_typed_epistemic[epistemic_index])->second;
     }
 
     void newGlobalState() {
@@ -189,11 +195,32 @@ public:
         }
     }
 
-    int getLatestEpistemicHistory( StateDescriptor *sd, int epistemic_expression_id ) const {
+    int getLatestEpistemicHistory( StateDescriptor *sd, Variable* v ) const {
 
-        // TODO: 
-        
-        return -1;
+        EpistemicVariable *epi = dynamic_cast<EpistemicVariable*>(v);
+        assert( epi != nullptr );
+        const epistemic::history& local_history = getConstEpistemicHistory(epi->getEpistemicPredicateName());
+        Variable *lhs = epi->getLHS();
+        Variable *rhs = epi->getRHS();
+        // int id = lhs->getID();
+
+        vector< int > params = lhs->getParameterIDs();
+        vector< int > param_obj_idx ( params.size() );
+        for( unsigned i = 0; i < params.size(); i++ ){
+            assert( params[i] < 0 ); // the param is a constant object
+            param_obj_idx[i] = -(params[i]+1); // constants are 0-indexed
+        }
+
+        int lhs_val = getRegister(sd, 
+            sd->getPredicateName( lhs->getID() ), 
+            param_obj_idx, 
+            local_history.back()
+        );
+
+        assert( rhs->getVType() == VariableType::CONSTANT );
+        int rhs_val = rhs->getID();
+
+        return lhs_val == rhs_val;
     }
 	
 	vector< vector< int > > getStateVars() const{

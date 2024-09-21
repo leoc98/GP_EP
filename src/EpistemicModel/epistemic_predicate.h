@@ -7,8 +7,18 @@ private:
     std::string predicate;
     std::string agent;
     std::string parent_predicate;
+    std::string depend_predicate;
 public:
-    EpistemicPredicate(const std::string &predicate, const std::string &agent, const std::string &parent_predicate) : predicate(predicate), agent(agent), parent_predicate(parent_predicate) {}
+    EpistemicPredicate() = default; // for global 
+    EpistemicPredicate(
+        const std::string &predicate, 
+        const std::string &agent, 
+        const std::string &parent_predicate, 
+        const std::string& depend_predicate
+    ) : predicate(predicate), 
+        agent(agent), 
+        parent_predicate(parent_predicate), 
+        depend_predicate(depend_predicate) {}
     std::string getPredicate() const {
         return predicate;
     }
@@ -30,6 +40,9 @@ public:
     std::string getName() const {
         return parent_predicate + (parent_predicate.length()?" ":"") + predicate + " " + agent;
     }
+    std::string getDependPredicate() const {
+        return depend_predicate;
+    }
     std::string toString() const {
         return getName();
     }
@@ -43,10 +56,10 @@ public:
 // hash function
 namespace std {
     template<> struct hash<EpistemicPredicate> {
-        std::size_t operator()(EpistemicPredicate const& ep) const noexcept {
+        std::size_t operator()(const EpistemicPredicate& ep) const noexcept {
             return std::hash<std::string>()(ep.getName());
         }
-        std::size_t operator()(string const& s) const noexcept {
+        std::size_t operator()(const string& s) const noexcept {
             return std::hash<std::string>()(s);
         }
     };

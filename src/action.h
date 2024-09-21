@@ -38,6 +38,10 @@ public:
 			num_effects[ i ] = ( _effects[ i ]->getEffect( s ) );
 		//	res &= (num_effects[i] > 0?1:0);
 		}
+
+		// add new global state to the epistemic history
+		s->newGlobalState();
+
 		// Following the planning community convention
 		// first apply the negative effects, then positives
 		for( int neg = 0; neg < 2; neg++ ){
@@ -47,6 +51,12 @@ public:
                     _effects[ i ]->setEffect( s, num_effects[ i ] );
 			}
 		}
+
+		/*
+			update episemic history here
+		*/
+		s->updateEpistemicHistory();
+
 	
 		// Return the last effect
 		if( int( num_effects.size() ) == 0 ) return 0; // 0 by default if no effects, e.g. CMP action

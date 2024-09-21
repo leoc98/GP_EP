@@ -94,7 +94,8 @@ public:
 		    return s->getRegister( sd, pred_type, param_obj_idx );
 		} else if ( vtype == VariableType::EPISTEMIC ){
 			// TODO: handle epistemic
-			return s->getLatestHistory( sd, id );
+
+			return s->getLatestEpistemicHistory( sd, v );
 		}
 
 		// Otherwise is a constant

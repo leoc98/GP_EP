@@ -5,14 +5,22 @@
 
 class EpistemicVariable : public Variable {
 public:
-    EpistemicVariable(const string &name, void* condition, VariableType vtype = VariableType::EPISTEMIC) : 
+    EpistemicVariable(const string &name, Variable* lhs, Variable* rhs, VariableType vtype = VariableType::EPISTEMIC) : 
         Variable(name, vtype, 0, {}),
         epistemic_predicate_name(name.begin(), name.begin()+ (name.find('(')-1)),
-        condition(condition) {
+        lhs(lhs), rhs(rhs) {
         // input looks like  name = "b [b] b [a] ( face(c) = 1 )"
     }
-    void setCondition(void* condition) {
-        this->condition = condition;
+    ~EpistemicVariable() {
+        delete lhs;
+        delete rhs;
+    }
+
+    Variable* getLHS() const {
+        return lhs;
+    }
+    Variable* getRHS() const {
+        return rhs;
     }
     string getEpistemicPredicateName() const {
         return epistemic_predicate_name;
@@ -22,6 +30,7 @@ public:
         string pred = "";
         string agent = "";
         string parent_pred = "";
+        string depend_pred = "";
         bool reading_pre = true;
         for (const char& c:exp) {
             if (c == '(') {
@@ -32,10 +41,11 @@ public:
                     reading_pre = false;
                 } else {
                     if (pred == "b") {
-                        ret.emplace_back("O", agent, parent_pred);
+                        ret.emplace_back("O", agent, parent_pred, depend_pred);
+                        ret.emplace_back(pred, agent, parent_pred, depend_pred + (depend_pred.length()?" ":"") + "O " + agent);
+                        depend_pred += pred + " " + agent;
+                        parent_pred = ret.back().getName();
                     }
-                    ret.emplace_back(pred, agent, parent_pred);
-                    parent_pred = ret.back().getName();
                     pred.clear();
                     agent.clear();
                     reading_pre = true;
@@ -55,7 +65,8 @@ public:
     }
 private:
     string epistemic_predicate_name;
-    void* condition; // this can be static_cast to a Condition/Equals pointer
+    Variable* lhs; 
+    Variable* rhs; 
 };
 
 #endif // EPISTEMIC_VARIABLE_H
