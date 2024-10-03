@@ -61,6 +61,7 @@ public:
 	    assert( obj_to_type.find( name ) == obj_to_type.end() );
 	    obj_to_type[ name ] = obj_type;
 	    obj_to_address[ name ] = num_of_objects;
+		address_to_obj[ {obj_type, num_of_objects} ] = name;
 	    sd->setStateVarBound( obj_type, _instance_id, num_of_objects+1 );
 	}
 
@@ -137,6 +138,14 @@ public:
 			ret += g->toString(false ) + "\n";
 		return ret;
 	}
+
+	const map< pair< string, int> , string >& getAddressToObject() const{
+	    return address_to_obj;
+	}
+	
+	const map< string, int >& getObjectToAddress() const{
+	    return obj_to_address;
+	}
 	
 private:
 	string _name;
@@ -145,6 +154,7 @@ private:
 	int _instance_id;
 	map< string, string > obj_to_type;
 	map< string, int > obj_to_address;
+	map< pair< string, int> , string > address_to_obj;
 };
 
 #endif
