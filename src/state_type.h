@@ -5,7 +5,8 @@
 using namespace std;
 
 namespace StateType {
-    using predicate = map< vector< int >, int >;
+    using parameter_list = vector< int >;
+    using predicate = map< parameter_list, int >;
     using predicates = vector< predicate >;
 }
 

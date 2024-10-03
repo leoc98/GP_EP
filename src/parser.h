@@ -385,7 +385,7 @@ public:
             return false;
         }
 
-        ins->setInitialState( new State( sd ) );
+        ins->setInitialState( new State( sd, ins->getAddressToObject(), ins->getObjectToAddress() ) );
 
         State *init = ins->getInitialState();
 

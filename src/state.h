@@ -17,12 +17,15 @@ public:
     // }
 
     // Constructor mainly used for initial states
-	explicit State( StateDescriptor *sd, int instance_id = 0 ):
+	explicit State( StateDescriptor *sd, const map< pair< string, int> , string >& id_to_obj_name, const map< string, int >& obj_to_address,int instance_id = 0 ):
             // initial global state
             _typed_epistemic(1), 
             _epistemic_string_to_id({{"", 0}}),
             _epistemic_history({{_typed_epistemic[0],{}}}), 
-            _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second)
+            _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second),
+            _lastest_history_index(0),
+            _id_to_object_name(id_to_obj_name),
+            obj_to_address(obj_to_address)
     {
         auto var_types = sd->getVarTypes();
         _typed_pointers.resize( var_types.size() );
@@ -35,6 +38,10 @@ public:
         _typed_registers.push_back( predicates( pred_types.size() ) );
         // _typed_registers.back().resize( pred_types.size() );
         _instance_id = instance_id;
+
+        // Initialize the epistemic model
+        EpistemicModel::setStateDescriptor( sd );
+        EpistemicModel::setObservation( new EpistemicObservation( new CoinSeeingRule() ) );
 	}
 
 	// Constructor mainly used to make copies and propagate effects
@@ -43,7 +50,9 @@ public:
             _epistemic_string_to_id(s->_epistemic_string_to_id),
             _epistemic_history(s->_epistemic_history),
             _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second),
-            _lastest_history_index(s->_lastest_history_index)
+            _lastest_history_index(s->_lastest_history_index),
+            _id_to_object_name(s->_id_to_object_name),
+            obj_to_address(s->obj_to_address)
     {
 		_typed_pointers = s->getTypedPointers();
         _instance_id = s->getInstanceID();
@@ -158,7 +167,10 @@ public:
         epistemic::predicate& depend_predicate = _typed_epistemic[_epistemic_string_to_id[epistemic_type.getDependPredicate()]];
         history_it->second.emplace_back(
             EpistemicModel::updateLatestHistory(
-                epistemic_type, getEpistemicHistory(depend_predicate, _lastest_history_index)
+                epistemic_type, 
+                getEpistemicHistory(depend_predicate, _lastest_history_index),
+                _id_to_object_name,
+                obj_to_address
             )
         );
     }
@@ -326,8 +338,11 @@ private:
     unordered_map< string, int > _epistemic_string_to_id;
     std::unordered_map < epistemic::predicate, epistemic::history> _epistemic_history; // Epistemic history ( size = len(history) x required_history_type)
 	epistemic::history& _typed_registers; // PredType ( size = |Obj1| x ... x |ObjM|;  or size=1 for 0-ary)
-    size_t _lastest_history_index = 0;
+    size_t _lastest_history_index;
 	int _instance_id;
+
+    const map< pair< string, int> , string >& _id_to_object_name;
+    const map< string, int >& obj_to_address;
 };
 
 #endif

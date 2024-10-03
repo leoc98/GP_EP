@@ -45,6 +45,11 @@ public:
                         ret.emplace_back(pred, agent, parent_pred, depend_pred + (depend_pred.length()?" ":"") + "O " + agent);
                         depend_pred += pred + " " + agent;
                         parent_pred = ret.back().getName();
+                    } else if (pred == "O") {
+                        ret.emplace_back("O", agent, parent_pred, depend_pred);
+                        depend_pred += pred + " " + agent;
+                        parent_pred = ret.back().getName();
+
                     }
                     pred.clear();
                     agent.clear();
