@@ -158,13 +158,17 @@ public:
         _epistemic_history.insert( { epistemic_type, {} } );
     }
 
+    const epistemic::predicate& getEpistemicPredicate( const string &epistemic_name ) const{
+        assert(_epistemic_string_to_id.find(epistemic_name) != _epistemic_string_to_id.end());
+        return _typed_epistemic[ _epistemic_string_to_id.find( epistemic_name )->second ];
+    }
+
     void generateEpistemicHistory( const epistemic::predicate &epistemic_type) {
-        assert(_epistemic_string_to_id.find(epistemic_type.getName()) != _epistemic_string_to_id.end());
-        auto history_it = _epistemic_history.find(_typed_epistemic[_epistemic_string_to_id[epistemic_type.getName()]]);
+        auto history_it = _epistemic_history.find(getEpistemicPredicate(epistemic_type.getName()));
         assert(history_it != _epistemic_history.end());
         
         
-        epistemic::predicate& depend_predicate = _typed_epistemic[_epistemic_string_to_id[epistemic_type.getDependPredicate()]];
+        const epistemic::predicate& depend_predicate = getEpistemicPredicate(epistemic_type.getDependPredicate());
         history_it->second.emplace_back(
             EpistemicModel::updateLatestHistory(
                 epistemic_type, 
