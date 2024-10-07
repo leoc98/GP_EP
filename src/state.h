@@ -6,6 +6,7 @@
 #include "state_type.h"
 #include "EpistemicModel/epistemic_model.h"
 #include "EpistemicModel/epistemic_variable.h"
+#include <functional>
 
 class State{
 public:
@@ -42,6 +43,7 @@ public:
         // Initialize the epistemic model
         EpistemicModel::setStateDescriptor( sd );
         EpistemicModel::setObservation( new EpistemicObservation( new CoinSeeingRule() ) );
+        EpistemicModel::setPerspectives( new EpistemicPerspectives() );
 	}
 
 	// Constructor mainly used to make copies and propagate effects
@@ -168,11 +170,13 @@ public:
         assert(history_it != _epistemic_history.end());
         
         
-        const epistemic::predicate& depend_predicate = getEpistemicPredicate(epistemic_type.getDependPredicate());
+        
         history_it->second.emplace_back(
             EpistemicModel::updateLatestHistory(
                 epistemic_type, 
-                getEpistemicHistory(depend_predicate, _lastest_history_index),
+                std::bind(static_cast<epistemic::history&(State::*)(const epistemic::predicate&, size_t)>(&State::getEpistemicHistory), this, std::placeholders::_1, std::placeholders::_2),
+                std::bind(&State::getEpistemicPredicate, this, std::placeholders::_1),
+                _lastest_history_index,
                 _id_to_object_name,
                 obj_to_address
             )
@@ -212,7 +216,7 @@ public:
     }
 
     int getLatestEpistemicHistory( StateDescriptor *sd, Variable* v ) const {
-
+        
         EpistemicVariable *epi = dynamic_cast<EpistemicVariable*>(v);
         assert( epi != nullptr );
         const epistemic::history& local_history = getConstEpistemicHistory(epi->getEpistemicPredicateName());
@@ -284,7 +288,7 @@ public:
 		return ret;
 	}
 
-	string toString( StateDescriptor *sd ){//, map< int, int > & var_id_to_num_objects ){
+	string toString( StateDescriptor *sd ) const {//, map< int, int > & var_id_to_num_objects ){
 		string ret = "[STATE]:\n";
 
 		vector< string > pointer_names = sd->getPointerNames();
@@ -299,22 +303,31 @@ public:
             }
 		}
 
-		for( unsigned i = 0; i < pred_types.size(); i++ ){
-		    ret += "+ " + pred_types[i] + "(";
-		    vector< string > v_names = sd->getPredicateVarNames( pred_types[ i ] );
-		    for( unsigned j = 0; j < v_names.size(); j++ ){
-		        ret += (j?",":"") + v_names[j];
-		    }
-		    ret += "):";
-		    for( const auto& sv : _typed_registers.back()[ i ] ){
-		        ret += " (";
-		        for( int k = 0; k < int( sv.first.size()); k++ ){
-		            ret += (k?",":"") + to_string( sv.first[k] );
-		        }
-                ret += ")="+ to_string(sv.second);
-		    }
-		    ret += "\n";
-		}
+        for (unsigned timestamp = 0; timestamp < _lastest_history_index; timestamp++) {
+            ret += "Timestamp " + to_string(timestamp) + ":\n";
+            for (unsigned epistemic_index = 0; epistemic_index < _typed_epistemic.size(); epistemic_index++) {
+                const epistemic::predicate& epistemic_type = _typed_epistemic[epistemic_index];
+                string epistemic_name = epistemic_type.getName();
+                ret += (epistemic_name.length()?epistemic_name:"Global") + ":\n";
+                const epistemic::history& local_history = getConstEpistemicHistory(epistemic_type.getName());
+                for( unsigned i = 0; i < pred_types.size(); i++ ){
+                    ret += "+ " + pred_types[i] + "(";
+                    vector< string > v_names = sd->getPredicateVarNames( pred_types[ i ] );
+                    for( unsigned j = 0; j < v_names.size(); j++ ){
+                        ret += (j?",\t":"") + v_names[j];
+                    }
+                    ret += "):";
+                    for( const auto& sv : local_history[timestamp][ i ] ){
+                        ret += " (";
+                        for( int k = 0; k < int( sv.first.size()); k++ ){
+                            ret += (k?",":"") + to_string( sv.first[k] );
+                        }
+                        ret += ")="+ to_string(sv.second);
+                    }
+                    ret += "\n";
+                }
+            }
+        }
 		return ret;
 	}
 
