@@ -38,7 +38,7 @@ public:
         this->parent_predicate = parent_predicate;
     }
     std::string getName() const {
-        return parent_predicate + (parent_predicate.length()?" ":"") + predicate + " " + agent;
+        return parent_predicate + (parent_predicate.length()?" ":"") + predicate + (predicate.length()?" ":"") + agent;
     }
     std::string getDependPredicate() const {
         return depend_predicate;
