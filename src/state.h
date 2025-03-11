@@ -42,7 +42,8 @@ public:
 
         // Initialize the epistemic model
         EpistemicModel::setStateDescriptor( sd );
-        EpistemicModel::setObservation( new EpistemicObservation( new CoinSeeingRule() ) );
+        // EpistemicModel::setObservation( new EpistemicObservation( new CoinSeeingRule() ) );
+        EpistemicModel::setObservation( new EpistemicObservation( new CorridorSeeingRule() ) );
         EpistemicModel::setPerspectives( new EpistemicPerspectives() );
 	}
 
