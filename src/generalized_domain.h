@@ -183,7 +183,7 @@ public:
                     _instructions_line[ line ].push_back( test_ins );
                     */
                     // 8. & 9. only relevant for numerical domains
-                    if( TESTS_ALLOWED ) {
+                    if( TESTS_ALLOWED && pred1_name.find("@nt") == string::npos ) {
                         //8. cmp(register,0). Test if a register is 0
                         auto *cmp_act = new Action("test-min", "(" + pred1_name + ")");
                         // NO CONDS
