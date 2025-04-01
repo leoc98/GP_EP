@@ -15,7 +15,6 @@ public:
         const epistemic::agent& agent_name, 
         const string& target_predicate_name,
         const StateType::parameter_list& param_list,
-        const vector<string>& param_names,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
         StateDescriptor* sd
@@ -30,7 +29,6 @@ public:
         const epistemic::agent& agent_name, 
         const string& target_predicate_name,
         const StateType::parameter_list& param_list,
-        const vector<string>& param_names,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
         StateDescriptor* sd
@@ -39,9 +37,7 @@ public:
         {
             return true;
         }
-        vector<string> peeking_param_names = sd->getPredicateVarNames("peeking");
-        assert(peeking_param_names.size() == 1);
-        StateType::parameter_list peeking_param_list(peeking_param_names.size());
+        StateType::parameter_list peeking_param_list(sd->getPredicateVarNamesNumber("peeking"));
         peeking_param_list[0] = obj_to_address.at(agent_name);
         int pred_ind = sd->getPredicateIDX( "peeking" );
         return state[pred_ind].at(peeking_param_list) == 1;
@@ -56,7 +52,6 @@ public:
         const epistemic::agent& agent_name, 
         const string& target_predicate_name,
         const StateType::parameter_list& param_list,
-        const vector<string>& param_names,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
         StateDescriptor* sd
@@ -71,9 +66,7 @@ public:
         int secret_ind = obj_to_address.at(id_to_obj_name.at({secret_type, 0}));
 
         const string shared_type = "shared";
-        vector<string> shared_param_names = sd->getPredicateVarNames(shared_type);
-        assert(shared_param_names.size() == 1);
-        StateType::parameter_list shared_param_list(shared_param_names.size());
+        StateType::parameter_list shared_param_list(sd->getPredicateVarNamesNumber(shared_type));
         shared_param_list[0] = secret_ind;
         int pred_ind = sd->getPredicateIDX(shared_type);
         if (state[pred_ind].at(shared_param_list) == 0)
@@ -82,9 +75,7 @@ public:
         }
         
         auto find_loc_room = [&sd, &id_to_obj_name, &obj_to_address, &state](const string& pred_type, const int& obj_ind) {
-            vector<string> pred_param_names = sd->getPredicateVarNames(pred_type);
-            assert(pred_param_names.size() == 2);
-            StateType::parameter_list pred_param_list(pred_param_names.size());
+            StateType::parameter_list pred_param_list(sd->getPredicateVarNamesNumber(pred_type));
             pred_param_list[0] = obj_ind;
 
             // check each room fullfill pred or not
@@ -123,7 +114,6 @@ public:
         const epistemic::agent& agent_name, 
         const string& target_predicate_name,
         const StateType::parameter_list& param_list,
-        const vector<string>& param_names,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
         StateDescriptor* sd
@@ -165,7 +155,7 @@ public:
             return {-1,-1};
         };
         // get target loc
-        string target_name = id_to_obj_name.at({param_names[0],param_list[0]});
+        string target_name = id_to_obj_name.at({sd->getPredicateVarNamesByPos(target_predicate_name, 0),param_list[0]});
         auto target_pos = find_loc_by_obj_ind(target_predicate_name.find("agent")!=string::npos?"agent_at@nt":"view_at@nt", obj_to_address.at(target_name));
         int& target_x = target_pos.first; 
         int& target_y = target_pos.second; 
@@ -185,9 +175,7 @@ public:
         int dy = target_y - agent_y;
 
         auto find_agt_dir = [&sd, &id_to_obj_name, &obj_to_address, &state](const string& pred_type, const int& agent_ind) {
-            vector<string> pred_param_names = sd->getPredicateVarNames(pred_type);
-            assert(pred_param_names.size() == 2);
-            StateType::parameter_list pred_param_list(pred_param_names.size());
+            StateType::parameter_list pred_param_list(sd->getPredicateVarNamesNumber(pred_type));
             pred_param_list[0] = agent_ind;
 
             // check each room fullfill pred or not

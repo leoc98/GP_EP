@@ -197,7 +197,7 @@ public:
 	    return _predicate_types[ idx ];
 	}
 
-	vector< int > getPredicateVarTypeIDs( const string &pred_type ) const{
+	const vector< int >& getPredicateVarTypeIDs( const string &pred_type ) const{
 	    int pred_id = getTypeID( pred_type );
 	    assert( pred_id != -1 );
 	    auto it_pred2vars = _predicate_var_types.find( pred_id );
@@ -206,12 +206,21 @@ public:
 	}
 
 	vector< string > getPredicateVarNames( const string &pred_type ) const{
-	    auto var_ids = getPredicateVarTypeIDs( pred_type );
+	    const auto& var_ids = getPredicateVarTypeIDs( pred_type );
 	    vector< string > var_names(var_ids.size());
         for( int i = 0; i < (int)var_ids.size(); i++){
             var_names[i] = getVarName( var_ids[i] );
 	    }
 	    return var_names;
+	}
+
+	string getPredicateVarNamesByPos( const string &pred_type, int pos ) const{
+	    const auto& var_ids = getPredicateVarTypeIDs( pred_type );
+	    return getVarName( var_ids[pos] );
+	}
+
+	size_t getPredicateVarNamesNumber( const string &pred_type ) const{
+	    return getPredicateVarTypeIDs( pred_type ).size();
 	}
 
 	void computeGroundedParams( const vector< string > &params, vector< string > &grounded_params,
