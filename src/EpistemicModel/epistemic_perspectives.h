@@ -27,7 +27,8 @@ public:
         */
         StateType::predicates new_state = observation.back();
         for (size_t i = 0; i < new_state.size(); ++i) {
-            for (const auto& [param_list, _] : new_state[i]) {
+            for (const auto& param_list_item : new_state[i]) {
+                const auto& param_list = param_list_item.first;
                 if (new_state[i][param_list] == epistemic::EpistemicValue::UNKNOWN) {
                     int ts = identify_last_seen_timestamp(observation, i, param_list);
                     new_state[i][param_list] = retrieveFuction(parent_perspectives, ts, i, param_list);
@@ -55,8 +56,9 @@ public:
         int length = observation.size();
         for (int i = 0; i < length; ++i) {
             int ts = length - i - 1;
-            if (observation[ts][pred_idx].find(param_list) != observation[ts][pred_idx].end()) {
-                if (observation[ts][pred_idx].at(param_list) != epistemic::EpistemicValue::UNKNOWN) {
+            auto ts_it = observation[ts][pred_idx].find(param_list);
+            if (ts_it != observation[ts][pred_idx].end()) {
+                if (ts_it->second != epistemic::EpistemicValue::UNKNOWN) {
                     return ts;
                 }
             } else {
@@ -104,13 +106,14 @@ public:
             return epistemic::EpistemicValue::HAVENT_SEEN;
         }
         while (temp_ts >= 0) {
-            if (parent_perspectives[temp_ts][pred_idx].find(param_list) != parent_perspectives[temp_ts][pred_idx].end()) {
-                if (parent_perspectives[temp_ts][pred_idx].at(param_list) == epistemic::EpistemicValue::HAVENT_SEEN) {
+            auto temp_ts_it = parent_perspectives[temp_ts][pred_idx].find(param_list);
+            if (temp_ts_it != parent_perspectives[temp_ts][pred_idx].end()) {
+                if (temp_ts_it->second == epistemic::EpistemicValue::HAVENT_SEEN) {
                     temp_ts -= 1;
-                } else if (parent_perspectives[temp_ts][pred_idx].at(param_list) == epistemic::EpistemicValue::UNKNOWN) {
+                } else if (temp_ts_it->second == epistemic::EpistemicValue::UNKNOWN) {
                     throw std::invalid_argument("variable is not seen by the agent, should not happen");
                 } else {
-                    return epistemic::EpistemicValue(parent_perspectives[temp_ts][pred_idx].at(param_list));
+                    return epistemic::EpistemicValue(temp_ts_it->second);
                 }
             } else {
                 throw std::invalid_argument("variable is not in the observation list");
@@ -118,14 +121,15 @@ public:
         }
 
         temp_ts = timestamp + 1;
-        while (temp_ts < parent_perspectives.size()) {
-            if (parent_perspectives[temp_ts][pred_idx].find(param_list) != parent_perspectives[temp_ts][pred_idx].end()) {
-                if (parent_perspectives[temp_ts][pred_idx].at(param_list) == epistemic::EpistemicValue::HAVENT_SEEN) {
+        while (temp_ts < (long long)parent_perspectives.size()) {
+            auto temp_ts_it = parent_perspectives[temp_ts][pred_idx].find(param_list);
+            if (temp_ts_it != parent_perspectives[temp_ts][pred_idx].end()) {
+                if (temp_ts_it->second == epistemic::EpistemicValue::HAVENT_SEEN) {
                     temp_ts += 1;
-                } else if (parent_perspectives[temp_ts][pred_idx].at(param_list) == epistemic::EpistemicValue::UNKNOWN) {
+                } else if (temp_ts_it->second == epistemic::EpistemicValue::UNKNOWN) {
                     throw std::invalid_argument("variable is not seen by the agent, should not happen");
                 } else {
-                    return epistemic::EpistemicValue(parent_perspectives[temp_ts][pred_idx].at(param_list));
+                    return epistemic::EpistemicValue(temp_ts_it->second);
                 }
             } else {
                 throw std::invalid_argument("variable is not in the observation list");
