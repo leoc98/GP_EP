@@ -10,9 +10,10 @@ public:
     EpistemicPerspectives() = default;
     virtual ~EpistemicPerspectives() = default;
 
-    StateType::predicates generatePerspectives(
+    StateType::predicates& generatePerspectives(
         const epistemic::history& observation, 
-        const epistemic::history& parent_perspectives
+        const epistemic::history& parent_perspectives,
+        StateType::predicates& new_state
         ) {
         /*
         python code:
@@ -25,7 +26,7 @@ public:
 
         return new_state
         */
-        StateType::predicates new_state = observation.back();
+        // StateType::predicates new_state = observation.back();
         for (size_t i = 0; i < new_state.size(); ++i) {
             for (const auto& param_list_item : new_state[i]) {
                 const auto& param_list = param_list_item.first;

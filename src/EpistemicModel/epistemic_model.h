@@ -78,7 +78,7 @@ public:
                     temp_ps = self.generate_p(os[:i+1],parent_ps[:i+1])
                     ps.append(temp_ps)
                 */
-                new_perspectives = _perspectives->generatePerspectives(observation, parent_perspectives);
+                _perspectives->generatePerspectives(observation, parent_perspectives, new_perspectives);
             }
             break;
             default:
