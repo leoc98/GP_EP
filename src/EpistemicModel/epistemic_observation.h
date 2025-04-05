@@ -20,8 +20,8 @@ public:
         const StateType::parameter_list& param_list,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
-        StateDescriptor* sd
-
+        StateDescriptor* sd,
+        EpistemicSeeingSupportDescriptor* essd
     ) {
         return _seeing_rule->checkVisibility(
             state, 
@@ -30,7 +30,8 @@ public:
             param_list,
             id_to_obj_name,
             obj_to_address,
-            sd
+            sd,
+            essd
         );
     }
 

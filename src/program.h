@@ -132,7 +132,7 @@ public:
 
 		int num_instances = gpp->getNumInstances();
 		StateDescriptor *sd = (gpp->getDomain())->getStateDescriptor();
-		auto pred_names = sd->getPredicateTypes();
+		// auto pred_names = sd->getPredicateTypes();
 
 		// One program state per instance
 		vector< ProgramState* > pss( num_instances ) ;

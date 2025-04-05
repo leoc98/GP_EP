@@ -2,6 +2,7 @@
 #define EPISTEMIC_SEEING_RULE_H
 #include "../state_type.h"
 #include "epistemic_common.h"
+#include "epistemic_seeing_support_descriptor.h"
 #include "../state_descriptor.h"
 #include <map>
 #include <unordered_map>
@@ -17,7 +18,8 @@ public:
         const StateType::parameter_list& param_list,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
-        StateDescriptor* sd
+        StateDescriptor* sd,
+        EpistemicSeeingSupportDescriptor* essd
     ) = 0;
     virtual ~EpistemicSeeingRule() = default;
 };
@@ -31,7 +33,8 @@ public:
         const StateType::parameter_list& param_list,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
-        StateDescriptor* sd
+        StateDescriptor* sd,
+        EpistemicSeeingSupportDescriptor* essd
     ) {
         if (target_predicate_name != "face")
         {
@@ -54,7 +57,8 @@ public:
         const StateType::parameter_list& param_list,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
-        StateDescriptor* sd
+        StateDescriptor* sd,
+        EpistemicSeeingSupportDescriptor* essd
     ) {
         if (target_predicate_name != "secret_true")
         {
@@ -109,6 +113,8 @@ public:
 
 class BBLSeeingRule : public EpistemicSeeingRule {
 public:
+    unordered_map<string, bool> cache;
+    
     bool checkVisibility(
         const StateType::predicates& state, 
         const epistemic::agent& agent_name, 
@@ -116,7 +122,8 @@ public:
         const StateType::parameter_list& param_list,
         const map< pair< string, int> , string >& id_to_obj_name,
         const map< string, int >& obj_to_address,
-        StateDescriptor* sd
+        StateDescriptor* sd,
+        EpistemicSeeingSupportDescriptor* essd
     ) {
         if (target_predicate_name == "cw_cnct@nt" || 
             target_predicate_name == "ccw_cnct@nt" ||
@@ -126,119 +133,109 @@ public:
         {
             return true;
         }
-        auto find_loc_by_obj_ind = [&sd, &id_to_obj_name, &obj_to_address, &state](const string& pred_type, const int& obj_ind) -> pair<int, int> {
-            StateType::parameter_list pred_param_list(sd->getPredicateVarNamesNumber(pred_type));
-            pred_param_list[0] = obj_ind;
-
-            // check each room fullfill pred or not
-            int pos_x = 0;
-            const string x_pos_type = "x_pos";
-            const string y_pos_type = "y_pos";
-            // bool find_pos = false;
-            while (id_to_obj_name.count({x_pos_type, pos_x})) {
-                const string& xpos_name = id_to_obj_name.at({x_pos_type, pos_x});
-                pred_param_list[1] = obj_to_address.at(xpos_name);
-                int pos_y = 0;
-                while (id_to_obj_name.count({y_pos_type, pos_y})) {
-                    const string& ypos_name = id_to_obj_name.at({y_pos_type, pos_y});
-                    pred_param_list[2] = obj_to_address.at(ypos_name);
-                    if (state[sd->getPredicateIDX(pred_type)].at(pred_param_list) == 1)
-                    {
-                        // find_pos = true;
-                        return {pos_x,pos_y};
-                    }
-                    pos_y++;
-                }
-                pos_x++;
-            }
-            // assert(find_pos);
-            return {-1,-1};
-        };
+        BBLEpistemicSeeingSupportDescriptor* bbl_essd = dynamic_cast<BBLEpistemicSeeingSupportDescriptor*>(essd);
         // get target loc
         string target_name = id_to_obj_name.at({sd->getPredicateVarNamesByPos(target_predicate_name, 0),param_list[0]});
-        auto target_pos = find_loc_by_obj_ind(target_predicate_name.find("agent")!=string::npos?"agent_at@nt":"view_at@nt", obj_to_address.at(target_name));
-        int& target_x = target_pos.first; 
-        int& target_y = target_pos.second; 
+        const auto& target_pos = bbl_essd->obj_pos.at(target_name);
+        const int& target_x = target_pos.first; 
+        const int& target_y = target_pos.second; 
         if (target_x == -1 && target_y == -1) {
             return false;
         }
         // get agent loc
-        auto agent_pos = find_loc_by_obj_ind("agent_at@nt", obj_to_address.at(agent_name));
-        int& agent_x = agent_pos.first; 
-        int& agent_y = agent_pos.second;
+        const auto& agent_pos = bbl_essd->obj_pos.at(agent_name);
+        const int& agent_x = agent_pos.first; 
+        const int& agent_y = agent_pos.second;
 
         if (target_x == agent_x && target_y == agent_y) {
             return true;
         }
 
-        int dx = target_x - agent_x;
-        int dy = target_y - agent_y;
-
-        auto find_agt_dir = [&sd, &id_to_obj_name, &obj_to_address, &state](const string& pred_type, const int& agent_ind) {
-            StateType::parameter_list pred_param_list(sd->getPredicateVarNamesNumber(pred_type));
-            pred_param_list[0] = agent_ind;
-
-            // check each room fullfill pred or not
-            vector<string> dir_list = {"n", "ne", "e", "se", "s", "sw", "w", "nw"};
-            for (const string& dir : dir_list) {
-                pred_param_list[1] = obj_to_address.at(dir);
-                if (state[sd->getPredicateIDX(pred_type)].at(pred_param_list) == 1)
-                {
-                    return dir;
-                }
-            }
-            // assert(false);
-            return string("unknown");
-        };
-        string dir = find_agt_dir("agent_face", obj_to_address.at(agent_name));
+        const string& dir = bbl_essd->obj_dir.at(agent_name);
 
         if (dir == string("unknown")) {
             return false;
         }
-        if (dx == dy) {
-            if (dx > 0) {
-                return (dir == "n") || (dir == "ne") || (dir == "e");
-            } else if (dx < 0) {
-                return (dir == "s") || (dir == "sw") || (dir == "w");
+
+        return getCache(agent_x, agent_y, dir, target_x, target_y);
+    }
+
+    bool getCache(
+        int agent_x,
+        int agent_y,
+        const string& dir,
+        int target_x,
+        int target_y
+    ) {
+        string key = 
+            std::to_string(agent_x) + "_" +
+            std::to_string(agent_y) + "_" +
+            dir + "_" +
+            std::to_string(target_x) + "_" +
+            std::to_string(target_y);
+        auto it = cache.find(key);
+        int dx = target_x - agent_x;
+        int dy = target_y - agent_y;
+        if (it == cache.end()) {
+
+            if (dx == dy) {
+                if (dx > 0) {
+                    cache.insert({ key, 
+                        (dir == "n") || (dir == "ne") || (dir == "e") });
+                } else if (dx < 0) {
+                    cache.insert({ key, 
+                        (dir == "s") || (dir == "sw") || (dir == "w") });
+                }
             }
-        }
 
-        if (dx == -dy) {
-            if (dx > 0) {
-                return (dir == "e") || (dir == "se") || (dir == "s");
-            } else if (dx < 0) {
-                return (dir == "w") || (dir == "nw") || (dir == "n");
+            if (dx == -dy) {
+                if (dx > 0) {
+                    cache.insert({ key, 
+                        (dir == "e") || (dir == "se") || (dir == "s") });
+                } else if (dx < 0) {
+                    cache.insert({ key, 
+                        (dir == "w") || (dir == "nw") || (dir == "n") });
+                }
             }
+
+            it = cache.find(key);
         }
 
-        const std::unordered_map<std::string, std::pair<int, int>> directions = {
-            {"n", {45, 135}},
-            {"ne", {0, 90}},
-            {"e", {-45, 45}},
-            {"se", {-90, 0}},
-            {"s", {-135, -45}},
-            {"sw", {-180, -90}},
-            {"w", {-135, 135}},
-            {"nw", {90, 180}}
-        };
+        if (it == cache.end()) {
+            const std::unordered_map<std::string, std::pair<int, int>> directions = {
+                {"n", {45, 135}},
+                {"ne", {0, 90}},
+                {"e", {-45, 45}},
+                {"se", {-90, 0}},
+                {"s", {-135, -45}},
+                {"sw", {-180, -90}},
+                {"w", {-135, 135}},
+                {"nw", {90, 180}}
+            };
 
-        // Calculate the angle of the target relative to the agent.
-        double angle = std::atan2(dy, dx) * 180 / M_PI;
-        if (angle > 180) {
-            angle -= 360;
-        } else if (angle < -180) {
-            angle += 360;
-        }
+            // Calculate the angle of the target relative to the agent.
+            double angle = std::atan2(dy, dx) * 180 / M_PI;
+            if (angle > 180) {
+                angle -= 360;
+            } else if (angle < -180) {
+                angle += 360;
+            }
 
-        // Check if the target is within the 90 - degree viewing angle of the agent's direction.
-        assert(directions.find(dir) != directions.end());
-        int min_angle = directions.at(dir).first;
-        int max_angle = directions.at(dir).second;
-        if (dir == "w") {
-            return (angle <= min_angle || angle >= max_angle);
+            // Check if the target is within the 90 - degree viewing angle of the agent's direction.
+            assert(directions.find(dir) != directions.end());
+            int min_angle = directions.at(dir).first;
+            int max_angle = directions.at(dir).second;
+            if (dir == "w") {
+                cache.insert({ key, 
+                    (angle <= min_angle || angle >= max_angle) });
+            } else {
+                cache.insert({ key, 
+                    (angle >= min_angle && angle <= max_angle) });
+            }
+
+            it = cache.find(key);
         }
-            
-        return (angle >= min_angle && angle <= max_angle);
+        return it->second;
     }
 };
 #endif // EPISTEMIC_SEEING_RULE_H

@@ -149,7 +149,7 @@ public:
         auto v_pred_types = sd->getPredicateTypes();
         for( const auto& pred_type : v_pred_types ){
             auto pred_id = sd->getTypeID( pred_type );
-            auto param_var_ids = sd->getPredicateVarTypeIDs( pred_type );
+            const auto& param_var_ids = sd->getPredicateVarTypeIDs( pred_type );
             vector< string > param_var_names( param_var_ids.size() );
             for( unsigned i = 0; i < param_var_ids.size(); i++ )
                 param_var_names[i] = sd->getVarName( param_var_ids[i] );

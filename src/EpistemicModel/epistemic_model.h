@@ -3,6 +3,8 @@
 #include "epistemic_common.h"
 #include "epistemic_observation.h"
 #include "epistemic_perspectives.h"
+#include "epistemic_state_preprocessor.h"
+#include "epistemic_seeing_support_descriptor.h"
 #include "../state_descriptor.h"
 #include <functional>
 
@@ -10,6 +12,7 @@
 class EpistemicModel {
     static EpistemicObservation* _observation;
     static EpistemicPerspectives* _perspectives;
+    static EpistemicStatePreprocessor* _state_preprocessor;
     static StateDescriptor* _sd;
 public:
     static StateType::predicates updateLatestHistory(
@@ -25,34 +28,40 @@ public:
         const epistemic::history &parent_states = getEpistemicHistory(depend_predicate, _lastest_history_index);
         const StateType::predicates& last_state = parent_states.back();
 
+
         StateType::predicates ret(last_state);
         switch (epistemic::epistemic_string_to_type[epistemic_type.getPredicate()]) {
             case epistemic::EpistemicType::KNOWLEDGE:
             case epistemic::EpistemicType::OBSERVATION:
             {
                 StateType::predicates& observation = ret;
-                vector<string> pred_names = _sd->getPredicateTypes();
+                const vector<string>& pred_names = _sd->getPredicateTypes();
+                EpistemicSeeingSupportDescriptor* essd = _state_preprocessor->preprocessEpistemicState(
+                    last_state, 
+                    id_to_obj_name, 
+                    obj_to_address, 
+                    _sd
+                );
                 for (size_t pred_idx = 0; pred_idx < last_state.size(); pred_idx++) {
-                    std::string pred_name = pred_names[pred_idx];
-                    for (const auto& [param_list, _] : last_state[pred_idx]) {
-                        
-                        vector<string> param_names = _sd->getPredicateVarNames(pred_name);
-                       
+                    const std::string& pred_name = pred_names[pred_idx];
+                    for (const auto& param_list_item : last_state[pred_idx]) {
+                        const auto& param_list = param_list_item.first;
                         bool visibility = _observation->checkVisibility(
                             last_state, 
                             epistemic_type.getAgent(), 
                             pred_name,
                             param_list,
-                            param_names,
                             id_to_obj_name,
                             obj_to_address,
-                            _sd
+                            _sd,
+                            essd
                         );
                         if (false == visibility) {
                             observation[pred_idx][param_list] = epistemic::EpistemicValue::UNKNOWN;
                         }
                     }
                 }
+                delete essd;
             }
             break;
             case epistemic::EpistemicType::BELIEF:
@@ -77,6 +86,9 @@ public:
         }
         return ret;
     }
+    static void setStatePreprocessor(EpistemicStatePreprocessor* state_preprocessor) {
+        _state_preprocessor = state_preprocessor;
+    }
     static void setObservation(EpistemicObservation* observation) {
         _observation = observation;
     }
@@ -91,4 +103,5 @@ public:
 EpistemicObservation* EpistemicModel::_observation = nullptr;
 StateDescriptor* EpistemicModel::_sd = nullptr;
 EpistemicPerspectives* EpistemicModel::_perspectives = nullptr;
+EpistemicStatePreprocessor* EpistemicModel::_state_preprocessor = nullptr;
 #endif // EPISTEMIC_MODEL_H

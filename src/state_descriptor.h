@@ -331,7 +331,7 @@ public:
 	    return _var_types;
 	}
 
-    vector<string> getPredicateTypes() const{
+    const vector<string>& getPredicateTypes() const{
         return _predicate_types;
     }
 	
