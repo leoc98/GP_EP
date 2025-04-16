@@ -37,92 +37,98 @@ public:
                 if( p == "zf" or p == "cf" )
                     continue;
 
-                //1. inc(pointer). Increase a pointer
-                auto *inc_act = new Action("inc", "("+p+")");
+                bool is_const_pointer = p.find("@c") != string::npos;
 
-                Condition *inc_cond = new Add( sd,
-                        new Variable( p, VariableType::POINTER, sd->getTypeID(p) ),
-                        new Variable( "1", VariableType::CONSTANT, 1 ) );
-                inc_act->addCondition( inc_cond );
+                if (!is_const_pointer) {
+                    //1. inc(pointer). Increase a pointer
+                    auto *inc_act = new Action("inc", "("+p+")");
 
-                Operation *add_assign_op = new AddAssign( sd,
-                        new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
-                        new Variable( "1", VariableType::CONSTANT, 1 ) );
-                inc_act->addOperation( add_assign_op );
+                    Condition *inc_cond = new Add( sd,
+                            new Variable( p, VariableType::POINTER, sd->getTypeID(p) ),
+                            new Variable( "1", VariableType::CONSTANT, 1 ) );
+                    inc_act->addCondition( inc_cond );
 
-                _extra_actions.push_back( inc_act );
-                Instruction *inc_ins = new RAMAction( inc_act );
-                _instructions_line[ line ].push_back( inc_ins );
+                    Operation *add_assign_op = new AddAssign( sd,
+                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                            new Variable( "1", VariableType::CONSTANT, 1 ) );
+                    inc_act->addOperation( add_assign_op );
 
-                //2. dec(pointer). Decrease a pointer
-                auto *dec_act = new Action("dec", "("+p+")");
+                    _extra_actions.push_back( inc_act );
+                    Instruction *inc_ins = new RAMAction( inc_act );
+                    _instructions_line[ line ].push_back( inc_ins );
 
-                Condition *dec_cond = new Subtract( sd,
-                        new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
-                        new Variable( "1", VariableType::CONSTANT, 1 ) );
-                dec_act->addCondition( dec_cond );
+                    //2. dec(pointer). Decrease a pointer
+                    auto *dec_act = new Action("dec", "("+p+")");
 
-                Operation * sub_assign_op = new SubtractAssign( sd,
-                        new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
-                        new Variable( "1", VariableType::CONSTANT, 1 ) );
-                dec_act->addOperation( sub_assign_op );
+                    Condition *dec_cond = new Subtract( sd,
+                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                            new Variable( "1", VariableType::CONSTANT, 1 ) );
+                    dec_act->addCondition( dec_cond );
 
-                _extra_actions.push_back( dec_act );
-                Instruction *dec_ins = new RAMAction( dec_act );
-                _instructions_line[ line ].push_back( dec_ins );
+                    Operation * sub_assign_op = new SubtractAssign( sd,
+                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                            new Variable( "1", VariableType::CONSTANT, 1 ) );
+                    dec_act->addOperation( sub_assign_op );
 
-                /* 3. & 4. are not needed with conditional effects
-                //3. test-max(pointer). Test if a pointer is pointing the last typed element
-                Action *test_act = new Action( "test-max", "("+p+")" );
+                    _extra_actions.push_back( dec_act );
+                    Instruction *dec_ins = new RAMAction( dec_act );
+                    _instructions_line[ line ].push_back( dec_ins );
 
-                // NO CONDITION
+                    /* 3. & 4. are not needed with conditional effects
+                    //3. test-max(pointer). Test if a pointer is pointing the last typed element
+                    Action *test_act = new Action( "test-max", "("+p+")" );
 
-                Operation *test_op = new TestMax( sd, new Variable(p, VariableType::POINTER, sd->getTypeID(p)),
-                                                  new Variable("",VariableType::CONSTANT,0));
-                test_act->addOperation( test_op );
+                    // NO CONDITION
 
-                _extra_actions.push_back( test_act );
-                Instruction *test_ins = new RAMAction( test_act );
-                _instructions_line[ line ].push_back( test_ins );
+                    Operation *test_op = new TestMax( sd, new Variable(p, VariableType::POINTER, sd->getTypeID(p)),
+                                                    new Variable("",VariableType::CONSTANT,0));
+                    test_act->addOperation( test_op );
 
-                //4. cmp(pointer,0). Test if a pointer is pointing the first typed element
-                Action *cmp_act = new Action("test-min", "("+p+")");
-                // NO CONDS
-                Operation *cmp_op = new Compare( sd,
-                                                 new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
-                                                 new Variable( "0", VariableType::CONSTANT, 0 ) );
-                cmp_act->addOperation( cmp_op );
+                    _extra_actions.push_back( test_act );
+                    Instruction *test_ins = new RAMAction( test_act );
+                    _instructions_line[ line ].push_back( test_ins );
 
-                _extra_actions.push_back( cmp_act );
-                Instruction *cmp_ins = new RAMAction( cmp_act );
-                _instructions_line[ line ].push_back( cmp_ins );
-                */
+                    //4. cmp(pointer,0). Test if a pointer is pointing the first typed element
+                    Action *cmp_act = new Action("test-min", "("+p+")");
+                    // NO CONDS
+                    Operation *cmp_op = new Compare( sd,
+                                                    new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                                                    new Variable( "0", VariableType::CONSTANT, 0 ) );
+                    cmp_act->addOperation( cmp_op );
 
-                // New 3. clear a pointer (reset the pointer to the first position)
-                auto *clear_act = new Action( "clear", "("+p+")" );
-                // NO CONDITION
-                Operation *clear_op = new Assign(sd, new Variable(p,VariableType::POINTER,sd->getTypeID(p)),
-                                                 new Variable("",VariableType::CONSTANT,0));
-                clear_act->addOperation(clear_op);
-                _extra_actions.push_back( clear_act );
-                Instruction *clear_ins = new RAMAction( clear_act );
-                _instructions_line[ line ].push_back( clear_ins );
+                    _extra_actions.push_back( cmp_act );
+                    Instruction *cmp_ins = new RAMAction( cmp_act );
+                    _instructions_line[ line ].push_back( cmp_ins );
+                    */
+
+                    // New 3. clear a pointer (reset the pointer to the first position)
+                    auto *clear_act = new Action( "clear", "("+p+")" );
+                    // NO CONDITION
+                    Operation *clear_op = new Assign(sd, new Variable(p,VariableType::POINTER,sd->getTypeID(p)),
+                                                    new Variable("",VariableType::CONSTANT,0));
+                    clear_act->addOperation(clear_op);
+                    _extra_actions.push_back( clear_act );
+                    Instruction *clear_ins = new RAMAction( clear_act );
+                    _instructions_line[ line ].push_back( clear_ins );
+                }
+
 
                 for( const auto& p2 : v_pointers ){
                     if( p2 == "zf" or p2 == "cf" or p == p2 or
                         sd->getPointerVarType(p) != sd->getPointerVarType(p2) )
                         continue;
+                    if (!is_const_pointer) {
+                        //5. set(pointer1,pointer2). Assign pointer2 to pointer1
+                        auto *set_act = new Action("set", "(" + p + "," + p2 + ")");
+                        //NO CONDS
+                        Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p )),
+                                                        new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ) );
+                        set_act->addOperation(assign_op);
 
-                    //5. set(pointer1,pointer2). Assign pointer2 to pointer1
-                    auto *set_act = new Action("set", "(" + p + "," + p2 + ")");
-                    //NO CONDS
-                    Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p )),
-                                                      new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ) );
-                    set_act->addOperation(assign_op);
-
-                    _extra_actions.push_back(set_act);
-                    Instruction *set_ins = new RAMAction(set_act);
-                    _instructions_line[line].push_back(set_ins);
+                        _extra_actions.push_back(set_act);
+                        Instruction *set_ins = new RAMAction(set_act);
+                        _instructions_line[line].push_back(set_ins);
+                    }
 
                     // [3] Symmetry breaking - allow to compare only in one direction
                     if( sd->getTypeID(p) >= sd->getTypeID(p2) )
@@ -143,12 +149,12 @@ public:
                     }
 
                     if ( ASSIGN_INC_DEC_ALLOWED ) {
-                        {
+                        if (!is_const_pointer) {
                             //7. parallel_inc(pointer1,pointer2). Increase pointer2 = pointer1++
                             auto *par_inc_act = new Action("parallel_inc", "(" + p + "," + p2 + ")");
                             
                             Condition *inc_cond = new Add( sd,
-                                    new Variable( p, VariableType::POINTER, sd->getTypeID(p) ),
+                                    new Variable( p2, VariableType::POINTER, sd->getTypeID(p2) ),
                                     new Variable( "1", VariableType::CONSTANT, 1 ) );
                             par_inc_act->addCondition( inc_cond );
 
@@ -156,7 +162,7 @@ public:
                                                             new Variable( p2, VariableType::POINTER, sd->getTypeID( p ) ) );
                             par_inc_act->addOperation(assign_op);
 
-                            Operation *add_assign_op = new AddAssign( sd,
+                            Operation *add_assign_op = new LoopAddAssign( sd,
                                     new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
                                     new Variable( "1", VariableType::CONSTANT, 1 ) );
                             par_inc_act->addOperation( add_assign_op );
@@ -166,7 +172,7 @@ public:
                             _instructions_line[ line ].push_back( par_inc_ins );
                         }
 
-                        {
+                        if (!is_const_pointer) {
                             //8. parallel_dec(pointer1,pointer2). Decrease pointer2 = pointer1--
                             auto *par_dec_act = new Action("parallel_dec", "(" + p + "," + p2 + ")");
                             Condition *dec_cond = new Subtract( sd,
@@ -187,7 +193,6 @@ public:
                             Instruction *par_dec_ins = new RAMAction( par_dec_act );
                             _instructions_line[ line ].push_back( par_dec_ins );
                         }
-
                     }
                 }
             }
