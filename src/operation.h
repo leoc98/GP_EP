@@ -59,7 +59,24 @@ public:
 		return lhs + rhs;
 	}
 
-}; 
+};
+
+class LoopAddAssign : public Operation{
+public:
+	LoopAddAssign( StateDescriptor *sd, Variable *lhs = 0, Variable *rhs = 0 ) : Operation( sd, "+=r", lhs, rhs ) {}
+	
+	virtual ~LoopAddAssign(){}
+	
+	virtual int getEffect( State *s ) const{
+		int lhs = getLHS( _sd, s );
+		int rhs = getRHS( _sd, s );
+		auto bound = _sd->getBound( _lhs->getID(), s->getInstanceID() );
+		if (lhs + rhs >= bound) {
+			return 0;
+		}
+		return lhs + rhs;
+	}
+};
 
 class SubtractAssign : public Operation{
 public:
