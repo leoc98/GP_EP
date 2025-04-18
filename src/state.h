@@ -25,6 +25,7 @@ public:
             _epistemic_history({{_typed_epistemic[0],{}}}), 
             _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second),
             _lastest_history_index(0),
+            _loopdetection_epistemic_predicates(),
             _id_to_object_name(id_to_obj_name),
             obj_to_address(obj_to_address)
     {
@@ -54,6 +55,7 @@ public:
             _epistemic_history(s->_epistemic_history),
             _typed_registers(_epistemic_history.find(_typed_epistemic[0])->second),
             _lastest_history_index(s->_lastest_history_index),
+            _loopdetection_epistemic_predicates(s->_loopdetection_epistemic_predicates),
             _id_to_object_name(s->_id_to_object_name),
             obj_to_address(s->obj_to_address)
     {
@@ -159,6 +161,11 @@ public:
         _typed_epistemic.emplace_back( epistemic_type );
         _epistemic_string_to_id[ epistemic_type.getName() ] = _typed_epistemic.size() - 1;
         _epistemic_history.insert( { epistemic_type, {} } );
+        // if epistemic_type not contain "O" it is a loopdetection predicate
+        // TODO: not a good idea to judge by O
+        if (epistemic_type.getName().find("O") == string::npos) {
+            _loopdetection_epistemic_predicates.emplace_back(epistemic_type);
+        }
     }
 
     const epistemic::predicate& getEpistemicPredicate( const string &epistemic_name ) const{
@@ -256,6 +263,24 @@ public:
             }
         }
 		return std::move(state_vars);
+	}
+
+    string asEpistemicString() const{
+        string ret = "";
+		for (const auto& epistemic_type : _loopdetection_epistemic_predicates) {
+            auto history_it = _epistemic_history.find(epistemic_type);
+            if (history_it != _epistemic_history.end()) {
+                const epistemic::history& local_history = history_it->second;
+                for( const auto& pred_regs : local_history.back() ) {
+                    for( const auto& sreg : pred_regs) {
+                        ret += to_string(sreg.second);
+                    }
+                }
+            } else {
+                throw std::runtime_error("Epistemic predicate not found in history");
+            }
+        }
+        return ret;
 	}
 	
 	int size() const{
@@ -358,6 +383,8 @@ private:
 	epistemic::history& _typed_registers; // PredType ( size = |Obj1| x ... x |ObjM|;  or size=1 for 0-ary)
     size_t _lastest_history_index;
 	int _instance_id;
+
+    vector< epistemic::predicate > _loopdetection_epistemic_predicates;
 
     const map< pair< string, int> , string >& _id_to_object_name;
     const map< string, int >& obj_to_address;

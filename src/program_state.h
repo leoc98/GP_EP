@@ -40,6 +40,10 @@ public:
         return res;
 	}
 	
+	string asEpistemicString() const{
+		return _state->asEpistemicString();
+	}
+	
 	string toString() const{
 		string ret = "[PROGRAM STATE]:\nLINE:" + to_string( _line ) + "\n";
 		if( _state )

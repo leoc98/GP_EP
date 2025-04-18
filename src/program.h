@@ -127,7 +127,7 @@ public:
 	}
 	
 	vector< ProgramState* > run( GeneralizedPlanningProblem *gpp, bool infinite_detection = true,
-                                 bool progressive_eval = false ){
+                                 bool progressive_eval = false, bool epistemic_infinite_detection = true){
         _num_of_steps = 0;
 
 		int num_instances = gpp->getNumInstances();
@@ -177,28 +177,36 @@ public:
 
 			// For detecting infinite loops (it can be enhanced with a hash or bigint identifier)
 			set< vector<int> > visited;
+			set< string > epis_visited;
 			int error = 0;
 
 			while( !haltingCondition( gpp->getInstance(id), ps, error ) ){
 				if( infinite_detection ){
 					// Checking infinite loop (only for backward loops)
+#ifdef MAX_STEPS
+					if( MAX_STEPS*num_instances < _num_of_steps ){
+						cout<< "[ERROR] Infinite program detected, max steps reached" << endl;
+						error = -3; break; // ERROR 3: Infinite program
+					}
+#endif
 					Goto *g = dynamic_cast<Goto*>( _instructions[ line ] );
 					if( g and g->getDestinationLine() < line ){
 						// Infinite loop detected
-#ifdef MAX_STEPS
-                        if( MAX_STEPS*num_instances < _num_of_steps ){
-                            error = -3; break; // ERROR 3: Infinite program
-                        }
-#else
                         vector<int> state_id = ps->asVector();
                         if( visited.find( state_id ) != visited.end() ){
-                            error = -3; // ERROR 3: Infinite program
-                            break;
+							if (epistemic_infinite_detection) {
+								string epis_id = ps->asEpistemicString();
+								if (epis_visited.find(epis_id) != epis_visited.end()) {
+									error = -3; // ERROR 3: Infinite program
+									break;
+								}
+								epis_visited.insert( epis_id );
+							}
                         }
                         visited.insert( state_id );
-#endif
 					}
 				}
+
 				
 				// Retrieving program line
 				line = ps->getLine();
