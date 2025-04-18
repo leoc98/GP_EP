@@ -154,6 +154,18 @@ int main(  int argc, const char* argv[] ){
 		{
 			gd->addHandler(new CascadeGotoFilter());
 		}
+		else if (line.compare("UnusedModificationPointerActionFilter") == 0)
+		{
+			gd->addHandler(new UnusedModificationPointerActionFilter(
+				{
+					{"set", {"inc", "dec", "clear", "set", "parallel_inc", "parallel_dec" }},
+					{"dec", {"clear"}},
+					{"parallel_inc", {"inc", "dec", "clear", "set", "parallel_inc", "parallel_dec" }},
+					{"parallel_dec", {"inc", "dec", "clear", "set", "parallel_inc", "parallel_dec" }},
+					{"clear", {"inc", "dec", "clear", "set", "parallel_inc", "parallel_dec" }}
+				}
+			));
+		}
 		else
 		{
 			break;
