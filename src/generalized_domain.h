@@ -184,7 +184,7 @@ public:
                                                             new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
                             par_dec_act->addOperation(assign_op);
 
-                            Operation *sub_assign_op = new SubtractAssign( sd,
+                            Operation *sub_assign_op = new LoopSubtractAssign( sd,
                                     new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
                                     new Variable( "1", VariableType::CONSTANT, 1 ) );
                             par_dec_act->addOperation( sub_assign_op );

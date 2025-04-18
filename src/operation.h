@@ -78,6 +78,23 @@ public:
 	}
 };
 
+class LoopSubtractAssign : public Operation{
+public:
+	LoopSubtractAssign( StateDescriptor *sd, Variable *lhs = 0, Variable *rhs = 0 ) : Operation( sd, "-=r", lhs, rhs ) {}
+	
+	virtual ~LoopSubtractAssign(){}
+	
+	virtual int getEffect( State *s ) const{
+		int lhs = getLHS( _sd, s );
+		int rhs = getRHS( _sd, s );
+		auto bound = _sd->getBound( _lhs->getID(), s->getInstanceID() );
+		if (lhs - rhs < 0) {
+			return bound - 1;
+		}
+		return lhs - rhs;
+	}
+};
+
 class SubtractAssign : public Operation{
 public:
 	SubtractAssign( StateDescriptor *sd, Variable *lhs = 0, Variable *rhs = 0 ) : Operation( sd, "-=", lhs, rhs ) {}
