@@ -194,6 +194,27 @@ public:
                             _instructions_line[ line ].push_back( par_dec_ins );
                         }
                     }
+
+                    if (SWAP_INSTRUCTION_ALLOWED) {
+                        if (!is_const_pointer) {
+                            
+                            //7. swap(pointer1,pointer2). Swap two pointers
+                            auto *swap_act = new Action("swap", "(" + p + "," + p2 + ")");
+                            // NO CONDS
+                            // use a=a+b; b=a-b; a=a-b;
+                            Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p )),
+                                                            new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ) );
+                            swap_act->addOperation(assign_op);
+
+                            Operation *assign_op2 = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
+                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
+                            swap_act->addOperation(assign_op2);
+
+                            _extra_actions.push_back(swap_act);
+                            Instruction *swap_ins = new RAMAction(swap_act);
+                            _instructions_line[line].push_back(swap_ins);
+                        }
+                    }
                 }
             }
         }

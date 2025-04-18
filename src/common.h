@@ -16,6 +16,7 @@
 #define CARRY_FLAG false
 #define CMP_INSTRUCTION_ALLOWED false
 #define ASSIGN_INC_DEC_ALLOWED true
+#define SWAP_INSTRUCTION_ALLOWED true
 #define POINTER_LANDMARKS true
 #define COPY_LANDMARKS false // true does not work properly
 #define IFS_ALLOWED false
