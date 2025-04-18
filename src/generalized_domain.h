@@ -158,8 +158,8 @@ public:
                                     new Variable( "1", VariableType::CONSTANT, 1 ) );
                             par_inc_act->addCondition( inc_cond );
 
-                            Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p2 )),
-                                                            new Variable( p2, VariableType::POINTER, sd->getTypeID( p ) ) );
+                            Operation *assign_op = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
+                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
                             par_inc_act->addOperation(assign_op);
 
                             Operation *add_assign_op = new LoopAddAssign( sd,
@@ -176,12 +176,12 @@ public:
                             //8. parallel_dec(pointer1,pointer2). Decrease pointer2 = pointer1--
                             auto *par_dec_act = new Action("parallel_dec", "(" + p + "," + p2 + ")");
                             Condition *dec_cond = new Subtract( sd,
-                                    new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                                    new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ),
                                     new Variable( "1", VariableType::CONSTANT, 1 ) );
                             par_dec_act->addCondition( dec_cond );
 
-                            Operation *assign_op = new Assign(sd, new Variable( p, VariableType::POINTER, sd->getTypeID( p2 )),
-                                                            new Variable( p2, VariableType::POINTER, sd->getTypeID( p ) ) );
+                            Operation *assign_op = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
+                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
                             par_dec_act->addOperation(assign_op);
 
                             Operation *sub_assign_op = new SubtractAssign( sd,
