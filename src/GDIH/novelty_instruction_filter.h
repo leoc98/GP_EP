@@ -6,7 +6,7 @@
 
 class NoveltyInstructionFilter : public GeneralizedDomainInstructionsHandler {
 public:
-    NoveltyInstructionFilter(int novelty): novelty_threshold(novelty), in_total(0), out_total(0) {}
+    NoveltyInstructionFilter(int novelty): GeneralizedDomainInstructionsHandler("NoveltyInstructionFilter"), novelty_threshold(novelty) {}
     virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
         unordered_map< string, int > instruction_cnt;
         vector< Instruction* > history_instructions = program->getInstructions();
@@ -38,13 +38,8 @@ public:
 
         return instructions;
     }
-    virtual string showPruneResult() override {
-        return "NoveltyInstructionFilter: " + to_string(in_total) + " -> " + to_string(out_total) + "\n";
-    }
 private:
     int novelty_threshold;  
-    int in_total;
-    int out_total;  
 };
 
 #endif // NOVELTY_INSTRUCTION_FILTER_H

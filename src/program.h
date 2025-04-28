@@ -12,7 +12,7 @@ public:
 	explicit Program( int program_lines = 1, Instruction* end_instruction = nullptr ){
         assert( program_lines >= 1 );
 		_instructions = vector<Instruction*>( program_lines, nullptr );
-        setInstruction( program_lines - 1, end_instruction );
+        // setInstruction( program_lines - 1, end_instruction );
         _num_of_steps = 0;
         _lm_count = -1;
         _failed_instance_id = -1;
@@ -64,6 +64,10 @@ public:
 	*/
 	bool haltingCondition( Instance* instance, ProgramState* ps, int &error ){
 		int line = ps->getLine();
+		if ( line >= int( _instructions.size() ) ){
+			error = -1; // ERROR 2: reach to the end of program
+			return true;
+		}
 		// EMPTY line is a halting condition (no transition defined)
 		Instruction* cur_instruction = _instructions[ line ];
 		if( cur_instruction == nullptr or instance->isGoalState(ps)){
@@ -71,8 +75,8 @@ public:
 		}
 
 		// Either True or False evaluation of End instructions is a halting condition
-		End* ins_end = dynamic_cast< End* > ( _instructions[ line ] );		
-		if( ins_end ) return true;
+		// End* ins_end = dynamic_cast< End* > ( _instructions[ line ] );		
+		// if( ins_end ) return true;
 
         // Conditional effects, actions do not have to be necessarily applicable
 		// (OLD) If it's a planning action, it must be applicable
@@ -91,6 +95,10 @@ public:
 	
 	bool checkGoal( ProgramState *ps, Instance *ins, int &error ){
 		int line = ps->getLine();
+		if ( line >= int( _instructions.size() ) ){
+			error = -1; // ERROR 2: reach to the end of program
+			return true;
+		}
 
 		/*
 			define error type 2, to handle the case to move to next instance but not at a deadend
@@ -102,14 +110,14 @@ public:
 			error = -2; // ERROR 2: need more instructions
 			return false;
 		}
-		End *end = dynamic_cast<End*>( _instructions[ line ] );	
-		if( end and not ins->isGoalState( ps ) ){
-            #ifdef DEBUG
-			//cout << ps->toString() << endl;
-            #endif
-			error = -1; // ERROR 1: Incorrect program, go into dead end
-			return false;
-		}
+		// End *end = dynamic_cast<End*>( _instructions[ line ] );	
+		// if( end and not ins->isGoalState( ps ) ){
+        //     #ifdef DEBUG
+		// 	//cout << ps->toString() << endl;
+        //     #endif
+		// 	error = -1; // ERROR 1: Incorrect program, go into dead end
+		// 	return false;
+		// }
 		return false;
 	}
 
@@ -198,6 +206,8 @@ public:
 								string epis_id = ps->asEpistemicString();
 								if (epis_visited.find(epis_id) != epis_visited.end()) {
 									error = -3; // ERROR 3: Infinite program
+									// cerr<< "[ERROR] Infinite program detected, infinite loop" << endl;
+									// cerr<< toString() << endl;
 									break;
 								}
 								epis_visited.insert( epis_id );
@@ -347,13 +357,13 @@ public:
             time(&end_instance);
 			if( error < 0 ){
 			    errors++;
-				cout << "INSTANCE #" << (id+1) << " ERROR " << error << "... :( [" << difftime(end_instance,start_instance) << "]" << endl;
-				for( int i = 0; i < int( pss.size() ); i++ ){
-				    cout << pss[i]->toString( sd ) << endl;
-				}
+				cout << "INSTANCE #" << (gpp->getInstance(id)->getInstanceID()+1) << " ERROR " << error << "... :( [" << difftime(end_instance,start_instance) << "]" << endl;
+				// for( int i = 0; i < int( pss.size() ); i++ ){
+				    // cout << pss[i]->toString( sd ) << endl;
+				// }
 			}
 			else
-				cout << "INSTANCE #" << (id+1) << " SOLVED! [" << difftime(end_instance,start_instance) <<"]" << endl;
+				cout << "INSTANCE #" << (gpp->getInstance(id)->getInstanceID()+1) << " SOLVED! [" << difftime(end_instance,start_instance) <<"]" << endl;
 			start_instance = end_instance;
             #else
             if (error == -2) {
@@ -361,6 +371,7 @@ public:
 				break;
 			} else if (error == -3) {
 				_failed_instance_id = id;
+                errors++;
 				break;
 			} else if( error < 0 ){
 				// we need to handle the all other cases that has errors

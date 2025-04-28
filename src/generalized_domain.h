@@ -22,7 +22,7 @@ public:
 		// Planning Actions
 		auto actions = d->getActions();
 		// [2] Symmetry Breaking - Only End can be programmed in last line
-		for( int i = 0; i + 1 < program_lines; i++ ){
+		for( int i = 0; i < program_lines; i++ ){
 			for(auto & action : actions){
 				_instructions_line[ i ].push_back( new PlanningAction( action ) );
 			}
@@ -31,7 +31,7 @@ public:
 		// Extending planning actions with pointer instructions
         auto v_pointers = sd->getPointerNames();
         // [2] Symmetry Breaking - extra actions cannot be programmed in the last two lines
-        for( int line = 0; line + 2 < program_lines; line++ ){
+        for( int line = 0; line + 1 < program_lines; line++ ){
             for( const auto& p : v_pointers ){
                 // zf and cf flags are indirectly modified by other pointer math updates
                 if( p == "zf" or p == "cf" )
@@ -117,6 +117,55 @@ public:
                     if( p2 == "zf" or p2 == "cf" or p == p2 or
                         sd->getPointerVarType(p) != sd->getPointerVarType(p2) )
                         continue;
+                    if ( ASSIGN_INC_ALLOWED ) {
+                        if (!is_const_pointer) {
+                            //7. parallel_inc(pointer1,pointer2). Increase pointer2 = pointer1++
+                            auto *par_inc_act = new Action("parallel_inc", "(" + p + "," + p2 + ")");
+                            
+                            Condition *inc_cond = new Add( sd,
+                                    new Variable( p2, VariableType::POINTER, sd->getTypeID(p2) ),
+                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
+                            par_inc_act->addCondition( inc_cond );
+
+                            Operation *assign_op = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
+                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
+                            par_inc_act->addOperation(assign_op);
+
+                            Operation *add_assign_op = new LoopAddAssign( sd,
+                                    new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
+                            par_inc_act->addOperation( add_assign_op );
+                            
+                            _extra_actions.push_back( par_inc_act );
+                            Instruction *par_inc_ins = new RAMAction( par_inc_act );
+                            _instructions_line[ line ].push_back( par_inc_ins );
+                        }
+                    }
+                    
+                    if ( ASSIGN_DEC_ALLOWED ) {
+                        if (!is_const_pointer) {
+                            //8. parallel_dec(pointer1,pointer2). Decrease pointer2 = pointer1--
+                            auto *par_dec_act = new Action("parallel_dec", "(" + p + "," + p2 + ")");
+                            Condition *dec_cond = new Subtract( sd,
+                                    new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ),
+                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
+                            par_dec_act->addCondition( dec_cond );
+
+                            Operation *assign_op = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
+                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
+                            par_dec_act->addOperation(assign_op);
+
+                            Operation *sub_assign_op = new LoopSubtractAssign( sd,
+                                    new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
+                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
+                            par_dec_act->addOperation( sub_assign_op );
+
+                            _extra_actions.push_back( par_dec_act );
+                            Instruction *par_dec_ins = new RAMAction( par_dec_act );
+                            _instructions_line[ line ].push_back( par_dec_ins );
+                        }
+                    }
+
                     if (!is_const_pointer) {
                         //5. set(pointer1,pointer2). Assign pointer2 to pointer1
                         auto *set_act = new Action("set", "(" + p + "," + p2 + ")");
@@ -146,53 +195,6 @@ public:
                         _extra_actions.push_back(cmp_act);
                         Instruction *cmp_ins = new RAMAction(cmp_act);
                         _instructions_line[line].push_back(cmp_ins);
-                    }
-
-                    if ( ASSIGN_INC_DEC_ALLOWED ) {
-                        if (!is_const_pointer) {
-                            //7. parallel_inc(pointer1,pointer2). Increase pointer2 = pointer1++
-                            auto *par_inc_act = new Action("parallel_inc", "(" + p + "," + p2 + ")");
-                            
-                            Condition *inc_cond = new Add( sd,
-                                    new Variable( p2, VariableType::POINTER, sd->getTypeID(p2) ),
-                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
-                            par_inc_act->addCondition( inc_cond );
-
-                            Operation *assign_op = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
-                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
-                            par_inc_act->addOperation(assign_op);
-
-                            Operation *add_assign_op = new LoopAddAssign( sd,
-                                    new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
-                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
-                            par_inc_act->addOperation( add_assign_op );
-                            
-                            _extra_actions.push_back( par_inc_act );
-                            Instruction *par_inc_ins = new RAMAction( par_inc_act );
-                            _instructions_line[ line ].push_back( par_inc_ins );
-                        }
-
-                        if (!is_const_pointer) {
-                            //8. parallel_dec(pointer1,pointer2). Decrease pointer2 = pointer1--
-                            auto *par_dec_act = new Action("parallel_dec", "(" + p + "," + p2 + ")");
-                            Condition *dec_cond = new Subtract( sd,
-                                    new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 ) ),
-                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
-                            par_dec_act->addCondition( dec_cond );
-
-                            Operation *assign_op = new Assign(sd, new Variable( p2, VariableType::POINTER, sd->getTypeID( p2 )),
-                                                            new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ) );
-                            par_dec_act->addOperation(assign_op);
-
-                            Operation *sub_assign_op = new LoopSubtractAssign( sd,
-                                    new Variable( p, VariableType::POINTER, sd->getTypeID( p ) ),
-                                    new Variable( "1", VariableType::CONSTANT, 1 ) );
-                            par_dec_act->addOperation( sub_assign_op );
-
-                            _extra_actions.push_back( par_dec_act );
-                            Instruction *par_dec_ins = new RAMAction( par_dec_act );
-                            _instructions_line[ line ].push_back( par_dec_ins );
-                        }
                     }
 
                     if (SWAP_INSTRUCTION_ALLOWED) {
@@ -238,7 +240,7 @@ public:
 
 
             // [3] Symmetry breaking - allow to compare only in one direction
-            for (int line = 0; line + 1 < program_lines; line++) {
+            for (int line = 0; line < program_lines; line++) {
                 for( unsigned i = 0; i < pointer_params.size(); i++ ) {
                     auto pred1_name = pred_type + "(" + pointer_params[i] + ")";
 
@@ -312,7 +314,7 @@ public:
                                    new Variable("cf", VariableType::POINTER, sd->getTypeID("cf")),
                                    new Variable("0", VariableType::CONSTANT, 0));
             // Only End can be programmed in last line
-            for( int from = 0; from + 1 < program_lines; from++ ){
+            for( int from = 0; from < program_lines; from++ ){
                 for( int to = 0; to < program_lines; to++ ){
                     // A goto cannot jump over itself or next line
                     if( from == to || from+1 == to )
@@ -329,7 +331,7 @@ public:
             }
         }
         else{ // ONLY ZERO FLAG
-            for( int from = 0; from + 1 < program_lines; from++ ) {
+            for( int from = 0; from < program_lines; from++ ) {
                 for (int to = 0; to < program_lines; to++) {
                     // A goto cannot jump over itself or next line
                     if (from == to || from + 1 == to)
@@ -339,15 +341,40 @@ public:
                         Instruction *ins = new Goto( to );
                         ins->addCond( _conds[ cond_id ] );
                         _instructions_line[ from ].push_back( ins );
+
+                        if (CLEAR_GOTO_ALLOWED) {
+                            for( const auto& p : v_pointers ){
+                                // zf and cf flags are indirectly modified by other pointer math updates
+                                if( p == "zf" or p == "cf" )
+                                    continue;
+
+                                bool is_const_pointer = p.find("@c") != string::npos;
+
+                                if (!is_const_pointer) {
+                                    //10. clear-goto(line, flag, pointer) = clear(pointer) then goto(line,flag)
+
+                                    auto *clear_act = new Action("clear-goto", "(" + to_string(to) + "," + p + ")");
+                                    // NO CONDITION
+                                    Operation *clear_op = new Assign(sd, new Variable(p,VariableType::POINTER,sd->getTypeID(p)),
+                                                                    new Variable("",VariableType::CONSTANT,0));
+                                    clear_act->addOperation(clear_op);
+                                    _extra_actions.push_back( clear_act );
+
+                                    Instruction *ins = new ClearGoto( to, clear_act );
+
+                                    _instructions_line[ from ].push_back( ins );
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 		
 		// End
-		for( int i = 0; i < program_lines; i++ ){
-			_instructions_line[ i ].push_back( new End() );
-		}
+		// for( int i = 0; i < program_lines; i++ ){
+		// 	_instructions_line[ i ].push_back( new End() );
+		// }
 
 		//cout << toString();
 	}

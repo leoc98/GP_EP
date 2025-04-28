@@ -7,7 +7,7 @@
 
 class LineProhibitFilter : public GeneralizedDomainInstructionsHandler {
 public:
-    LineProhibitFilter(unordered_map<string, vector<int>> prohibit_rule):prohibit_map(prohibit_rule), in_total(0), out_total(0) {}
+    LineProhibitFilter(unordered_map<string, vector<int>> prohibit_rule):GeneralizedDomainInstructionsHandler("LineProhibitFilter"), prohibit_map(prohibit_rule) {}
     virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
         in_total += instructions.size();
         for (auto& instruction : instructions) {
@@ -22,46 +22,47 @@ public:
 
         return instructions;
     }
-    virtual string showPruneResult() override {
-        return "LineProhibitFilter: " + to_string(in_total) + " -> " + to_string(out_total) + "\n";
-    }
 private:
     unordered_map<string, vector<int>> prohibit_map;
-    int in_total;
-    int out_total;
 };
 
 class CascadeGotoFilter : public GeneralizedDomainInstructionsHandler {
 public:
-    CascadeGotoFilter(): in_total(0), out_total(0) {}
+    CascadeGotoFilter(): GeneralizedDomainInstructionsHandler("CascadeGotoFilter") {}
     virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
         in_total += instructions.size();
         vector< Instruction* > history_instructions = program->getInstructions();
         for (auto& instruction : instructions) {
-            if (instruction->getSchema() == "GOTO") {
+            if (dynamic_cast<Goto*>(instruction) != nullptr) {
                 int dest_line = static_cast<Goto*>(instruction)->getDestinationLine();
-                if (history_instructions[dest_line]->getSchema() == "GOTO") {
+                if (dynamic_cast<Goto*>(history_instructions[dest_line]) != nullptr) {
+                    // Destination line should not be GOTO
                     instruction = instructions.back();
                     instructions.pop_back();
+                } else if (CLEAR_GOTO_ALLOWED && dynamic_cast<ClearGoto*>(instruction) != nullptr) {
+                    if (program_line == 0) {
+                        // clear-goto first instruction should be GOTO
+                        instruction = instructions.back();
+                        instructions.pop_back();
+                    }
+                    // clear-goto previous instruction should be GOTO
+                    Instruction* last_instruction = history_instructions[program_line - 1];
+                    if (last_instruction != nullptr && dynamic_cast<Goto*>(last_instruction) == nullptr) {
+                        instruction = instructions.back();
+                        instructions.pop_back();
+                    }
                 }
             }
-
         }
         out_total += instructions.size();
 
         return instructions;
     }
-    virtual string showPruneResult() override {
-        return "CascadeGotoFilter: " + to_string(in_total) + " -> " + to_string(out_total) + "\n";
-    }
-private:
-    int in_total;
-    int out_total;
 };
 
 class UnusedModificationPointerActionFilter : public GeneralizedDomainInstructionsHandler {
 public:
-    UnusedModificationPointerActionFilter(unordered_map<string, unordered_set<string>> prohibit_rule): prohibit_map(prohibit_rule), in_total(0), out_total(0) {}
+    UnusedModificationPointerActionFilter(unordered_map<string, unordered_set<string>> prohibit_rule): GeneralizedDomainInstructionsHandler("UnusedModificationPointerActionFilter"), prohibit_map(prohibit_rule) {}
     virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
         in_total += instructions.size();
         vector< Instruction* > history_instructions = program->getInstructions();
@@ -107,13 +108,29 @@ public:
 
         return instructions;
     }
-    virtual string showPruneResult() override {
-        return "UnusedModificationPointerActionFilter: " + to_string(in_total) + " -> " + to_string(out_total) + "\n";
-    }
 private:
     unordered_map<string, unordered_set<string>> prohibit_map; // key should be this instruction, value should be the instruction that modifies the same pointer
-    int in_total;
-    int out_total;
 };
+
+// class DomainKnowledgeSuggestion : public GeneralizedDomainInstructionsHandler {
+// public:
+//     DomainKnowledgeSuggestion(unordered_map<string, vector<string>> suggest_rule): GeneralizedDomainInstructionsHandler("DomainKnowledgeSuggestion"), suggest_map(suggest_rule) {}
+//     virtual vector< Instruction* >& filter( int program_line, vector< Instruction* >& instructions, const Program* program ) override {
+//         in_total += instructions.size();
+//         Instruction* last_instruction = program->getInstructions()[program_line - 1];
+//         for (auto& instruction : instructions) {
+//             auto it = suggest_map.find(instruction->getSchema());
+//             if (it != suggest_map.end()) {
+//                 auto& suggest_list = it->second;
+
+//             }
+//         }
+//         out_total += instructions.size();
+
+//         return instructions;
+//     }
+// private:
+//     unordered_map<string, vector<string>> suggest_map; // key should be previous instruction, value should be the instruction that sugget to try first in this line
+// };
 
 #endif // STRUCTURAL_RESTRICTION_H

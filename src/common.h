@@ -15,8 +15,10 @@
 #define REEVALUATE_OPEN_QUEUE true
 #define CARRY_FLAG false
 #define CMP_INSTRUCTION_ALLOWED false
-#define ASSIGN_INC_DEC_ALLOWED true
+#define ASSIGN_INC_ALLOWED true
+#define ASSIGN_DEC_ALLOWED false
 #define SWAP_INSTRUCTION_ALLOWED true
+#define CLEAR_GOTO_ALLOWED false
 #define POINTER_LANDMARKS true
 #define COPY_LANDMARKS false // true does not work properly
 #define IFS_ALLOWED false
