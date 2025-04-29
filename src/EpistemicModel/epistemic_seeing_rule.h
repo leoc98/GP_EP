@@ -64,6 +64,7 @@ public:
         {
             return true;
         }
+        CorridorEpistemicSeeingSupportDescriptor* crd_essd = dynamic_cast<CorridorEpistemicSeeingSupportDescriptor*>(essd);
         // assume only 1 secret now
         const string secret_type = "secret";
         assert(id_to_obj_name.count({secret_type, 0}));
@@ -78,34 +79,11 @@ public:
             return false;
         }
         
-        auto find_loc_room = [&sd, &id_to_obj_name, &obj_to_address, &state](const string& pred_type, const int& obj_ind) {
-            StateType::parameter_list pred_param_list(sd->getPredicateVarNamesNumber(pred_type));
-            pred_param_list[0] = obj_ind;
-
-            // check each room fullfill pred or not
-            int room_no = 0;
-            const string room_type = "room";
-            bool find_room = false;
-            while (id_to_obj_name.count({room_type, room_no})) {
-                const string& room_name = id_to_obj_name.at({room_type, room_no});
-                pred_param_list[1] = obj_to_address.at(room_name);
-                if (state[sd->getPredicateIDX(pred_type)].at(pred_param_list) == 1)
-                {
-                    find_room = true;
-                    break;
-                }
-                room_no++;
-            }
-            assert(find_room);
-            return room_no;
-        };
-
-
         // get shared_at loc
-        int share_at_loc = find_loc_room("shared_at", secret_ind);
+        int share_at_loc = crd_essd->obj_pos.at(id_to_obj_name.at({secret_type, 0}));
         
         // get agent_at loc
-        int agent_at_loc = find_loc_room("agent_at", obj_to_address.at(agent_name));
+        int agent_at_loc = crd_essd->obj_pos.at(agent_name);
 
         return abs(share_at_loc - agent_at_loc) <= 1;
     }

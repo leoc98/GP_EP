@@ -7,6 +7,11 @@ public:
     virtual ~EpistemicSeeingSupportDescriptor() = default;
 };
 
+class CorridorEpistemicSeeingSupportDescriptor : public EpistemicSeeingSupportDescriptor {
+public:
+    unordered_map<string, int> obj_pos;
+};
+
 class BBLEpistemicSeeingSupportDescriptor : public EpistemicSeeingSupportDescriptor {
 public:
     unordered_map<string, pair<int, int>> obj_pos;

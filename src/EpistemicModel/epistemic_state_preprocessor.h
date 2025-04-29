@@ -69,6 +69,101 @@ public:
     }
 };
 
+class CorridorEpistemicStatePreprocessor : public EpistemicStatePreprocessor {
+public:
+    vector<string> const_agnt_names;
+    string mv_agnt_name;
+    vector<string> all_obj_names;
+    void init(
+        const StateType::predicates& state,
+        const map< pair< string, int> , string >& id_to_obj_name,
+        const map< string, int >& obj_to_address,
+        StateDescriptor* sd
+    ) {
+        if (!const_agnt_names.empty() && !all_obj_names.empty()) {
+            return;
+        }
+        int agent_ind = 0;
+        while (id_to_obj_name.count({"agent", agent_ind})) {
+            string obj_name = id_to_obj_name.at({"agent", agent_ind});
+            if (obj_name != "unknown") {
+                const_agnt_names.push_back(obj_name);
+            }
+            agent_ind++;
+        }
+
+        if (id_to_obj_name.count({"movable_agent", 0})) {
+            mv_agnt_name = id_to_obj_name.at({"movable_agent", 0});
+        }
+
+        int obj_ind = 0;
+        while (id_to_obj_name.count({"secret", obj_ind})) {
+            all_obj_names.push_back(id_to_obj_name.at({"secret", obj_ind}));
+            obj_ind++;
+        }
+    }
+    EpistemicSeeingSupportDescriptor* preprocessEpistemicState(
+        const StateType::predicates& state,
+        const map< pair< string, int> , string >& id_to_obj_name,
+        const map< string, int >& obj_to_address,
+        StateDescriptor* sd
+    ) override {
+        init(
+            state,
+            id_to_obj_name,
+            obj_to_address,
+            sd
+        );
+        
+        CorridorEpistemicSeeingSupportDescriptor* crd_essd = new CorridorEpistemicSeeingSupportDescriptor();
+        const vector<string> r_list = {"r1", "r2", "r3", "r4"};
+
+        for (const auto& agent_name : const_agnt_names) {
+            int agent_ind = obj_to_address.at(agent_name);
+            auto loc = find_true_unary_pred_by_ind(
+                state,
+                "agent_at@nt",
+                agent_ind,
+                id_to_obj_name,
+                obj_to_address,
+                r_list,
+                sd
+            );
+            crd_essd->obj_pos[agent_name] = loc[1] - '1';
+        }
+
+        {
+            int agent_ind = obj_to_address.at(mv_agnt_name);
+            auto loc = find_true_unary_pred_by_ind(
+                state,
+                "agent_at",
+                agent_ind,
+                id_to_obj_name,
+                obj_to_address,
+                r_list,
+                sd
+            );
+            crd_essd->obj_pos[mv_agnt_name] = loc[1] - '1';
+        }
+
+        for (const auto& obj_name : all_obj_names) {
+            int obj_ind = obj_to_address.at(obj_name);
+            auto loc = find_true_unary_pred_by_ind(
+                state,
+                "shared_at",
+                obj_ind,
+                id_to_obj_name,
+                obj_to_address,
+                r_list,
+                sd
+            );
+            crd_essd->obj_pos[obj_name] = loc[1] - '1';
+        }
+
+        return crd_essd;
+    }
+};
+
 class BBLEpistemicStatePreprocessor : public EpistemicStatePreprocessor {
 public:
     vector<string> all_agnt_names;
