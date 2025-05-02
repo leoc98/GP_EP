@@ -39,18 +39,41 @@ int main(  int argc, const char* argv[] ){
 
 	int program_lines = stoi( argv[2] );
 	
+	vector< string > program_instructions;
 	string problem_folder = string( argv[3] );
+	int arg_bias = 5;
+	if( argc < arg_bias ){
+		arg_bias--;
+	} else if( string(argv[arg_bias-1]).find_first_of( ".prog" ) == string::npos ){
+		arg_bias--;
+	} else {
+		string program_file = string( argv[ arg_bias - 1 ] );
 
-    vector< string > heuristic_names( argc - 4 );
+		ifstream ifs_program( program_file );
+		
+		if( !ifs_program ){
+			cout << "[ERROR] the program " << program_file << " does not exist." << endl;
+			return -1;
+		}
+		
+		string instruction;
+		while( getline( ifs_program, instruction ) ){
+			if( instruction.size() == 0u ) continue;
+			instruction = instruction.substr( instruction.find_first_of( ". " ) + 2 );
+			program_instructions.push_back( instruction );
+		}
+	}
+
+    vector< string > heuristic_names( argc - arg_bias );
     string heuristics;
     bool preprocess_landmarks = false;
-    for( int i = 4; i < argc; i++ ) {
-        heuristic_names[ i-4 ] = string(argv[i]);
-        heuristics += "_" + heuristic_names[i-4];
-        if( heuristic_names[ i-4 ] == "landmarks" or heuristic_names[i-4] == "normlandmarks")
+    for( int i = arg_bias; i < argc; i++ ) {
+        heuristic_names[ i-arg_bias ] = string(argv[i]);
+        heuristics += "_" + heuristic_names[i-arg_bias];
+        if( heuristic_names[ i-arg_bias ] == "landmarks" or heuristic_names[i-arg_bias] == "normlandmarks")
             preprocess_landmarks = true;
     }
-    if( argc == 4 ){ // default heuristic
+    if( argc == arg_bias ){ // default heuristic
         heuristic_names.emplace_back("landmarks" );
         preprocess_landmarks = true;
         heuristics = "_landmarks";
@@ -190,7 +213,23 @@ int main(  int argc, const char* argv[] ){
     time( &landmarks_time );
     cout << "[INFO] Landmarks created. [" << difftime( landmarks_time, gd_time ) << "]" << endl;
 
-	auto *engine = new BFS( program_lines, gd, gpp );
+	Program* p;
+
+	if( program_instructions.size() > 0 ){
+		p = new Program( program_lines );
+		for( size_t l = 0; l < program_instructions.size(); l++ ){
+			Instruction *ins = gd->searchInstruction( l, program_instructions[ l ] );
+			if( ins == NULL ){
+				cout << "[ERROR] Instruction " << program_instructions[ l ] << " not found." << endl;
+				return -5;
+			}
+			p->setInstruction( l, ins );
+		}
+	} else {
+		p = nullptr;
+	}
+
+	auto *engine = new BFS( program_lines, gd, gpp, p );
     if( preprocess_landmarks ) {
         engine->setLandmarks(landmark_graphs);
     }

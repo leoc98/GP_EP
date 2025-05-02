@@ -15,7 +15,7 @@ struct CmpNodes{
 
 class Engine{
 public:
-	Engine( int program_lines, GeneralizedDomain *gd, GeneralizedPlanningProblem *gpp ){
+	Engine( int program_lines, GeneralizedDomain *gd, GeneralizedPlanningProblem *gpp, Program *checkpoint ){
 		_evaluated_states = 0;
 		_evaluated_nodes = 0;
 		_expanded_nodes = 0;
@@ -23,6 +23,7 @@ public:
 		_program_lines = program_lines;
 		_gd = gd;
 		_gpp = gpp;
+		_checkpoint = checkpoint;
 	}
 	
 	virtual ~Engine(){
@@ -34,6 +35,8 @@ public:
         for( auto lg : _landmark_graphs ){
             delete lg;
         }
+		if ( _checkpoint != nullptr )
+			delete _checkpoint;
 	}
 	
 	virtual bool isEmpty() const = 0;
@@ -99,11 +102,12 @@ protected:
 	GeneralizedPlanningProblem *_gpp;
 	GeneralizedDomain *_gd;
 	vector< LandmarkGraph* > _landmark_graphs;
+	Program *_checkpoint;
 };
 
 class BFS : public Engine{
 public:
-	BFS(int program_lines, GeneralizedDomain *gd, GeneralizedPlanningProblem *gpp) : Engine( program_lines, gd, gpp ){
+	BFS(int program_lines, GeneralizedDomain *gd, GeneralizedPlanningProblem *gpp, Program *checkpoint) : Engine( program_lines, gd, gpp, checkpoint ){
 	}
 	
 	~BFS() override{
@@ -274,6 +278,16 @@ public:
 
 	Node* solve(bool progressive) override{
 	    auto *root_program = new Program( _program_lines, _gd->getInstruction( _program_lines - 1, 0) );
+
+		if ( _checkpoint != nullptr ){
+			for( int l = 0; l < _checkpoint->getNumInstructions(); l++ ){
+				Instruction *ins = _checkpoint->getInstruction( l );
+				if( ins == NULL ){
+					break;
+				}
+				root_program->setInstruction( l, ins );
+			}
+		}
 
         root_program->setLandmarkGraphs(_landmark_graphs);
 
